@@ -13,7 +13,7 @@ servers:
       hostname:
         default: localhost
 security:
-  - bearerAuth: []
+  - bearerAuth: [ ]
 paths:
 
   /users/current:
@@ -36,10 +36,7 @@ components:
   schemas:
     User:
       type: object
-      required:
-        - displayName
-        - balance
-        - role
+      required: [ displayName, balance, role ]
       properties:
         displayName:
           type: string

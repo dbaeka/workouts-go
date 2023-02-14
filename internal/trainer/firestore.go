@@ -172,7 +172,7 @@ func setAvailability(hourUpdate time.Time, date Date, availabilityToSet bool) (D
 	for i := range date.Hours {
 		if date.Hours[i].Hour.Equal(hourUpdate) {
 			if date.Hours[i].HasTrainingScheduled && (availabilityToSet == false) {
-				return Date{}, errors.New("it is training already scheduled, cannot make not available")
+				return Date{}, errors.New("training already scheduled, cannot make  unavailable")
 			}
 
 			date.Hours[i].Available = availabilityToSet

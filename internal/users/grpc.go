@@ -8,6 +8,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// GrpcServer defines interface for the Porobuf GRPC generated code. Must also embed the Unimplemented type as well as
+// the RPC functions
 type GrpcServer struct {
 	db db
 	users.UnimplementedUsersServiceServer

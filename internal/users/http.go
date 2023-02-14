@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/render"
 )
 
+// HttpServer defines interface to satisfy OpenAPI generated code functions for this API
 type HttpServer struct {
 	db db
 }

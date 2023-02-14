@@ -28,7 +28,7 @@ func main() {
 	case "http":
 		go loadFixtures(firebaseDB)
 		server.RunHTTPServer(func(router chi.Router) http.Handler {
-			return HandlerFromMux(HttpServer{firebaseDB}, router)
+			return HandlerFromMux(HttpServer{firebaseDB}, router) // Function from OpenAPI generated code
 		})
 	case "grpc":
 		server.RunGRPCServer(func(server *grpc.Server) {
