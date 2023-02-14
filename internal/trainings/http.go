@@ -140,7 +140,7 @@ func (h HttpServer) CancelTraining(w http.ResponseWriter, r *http.Request, train
 		}
 
 		var trainingBalanceDelta int64
-		if training.canBeCancelled() {
+		if training.canBeCancelled() { // More than 24 hour cancel
 			// just give training back
 			trainingBalanceDelta = 1
 		} else {

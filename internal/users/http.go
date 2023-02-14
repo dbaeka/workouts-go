@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net"
 	"net/http"
 
 	"github.com/dbaeka/workouts-go/internal/common/auth"
@@ -20,13 +21,25 @@ func (h HttpServer) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err == nil {
+		err = h.db.UpdateLastIP(r.Context(), authUser.UUID, host)
+		if err != nil {
+			httperr.InternalError("internal-server-error", err, w, r)
+			return
+		}
+	}
+
 	user, err := h.db.GetUser(r.Context(), authUser.UUID)
 	if err != nil {
 		httperr.InternalError("cannot-get-user", err, w, r)
 	}
 
-	user.Role = authUser.Role
-	user.DisplayName = authUser.DisplayName
+	userResponse := User{
+		DisplayName: authUser.DisplayName,
+		Balance:     user.Balance,
+		Role:        authUser.Role,
+	}
 
-	render.Respond(w, r, user)
+	render.Respond(w, r, userResponse)
 }
