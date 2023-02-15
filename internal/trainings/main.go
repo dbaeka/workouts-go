@@ -2,6 +2,9 @@ package main
 
 import (
 	"context"
+	"github.com/dbaeka/workouts-go/internal/trainings/adapters"
+	"github.com/dbaeka/workouts-go/internal/trainings/app"
+	"github.com/dbaeka/workouts-go/internal/trainings/ports"
 	"net/http"
 	"os"
 
@@ -33,9 +36,13 @@ func main() {
 	}
 	defer func() { _ = closeUsersClient() }()
 
-	firebaseDB := db{client, trainerClient, usersClient}
+	trainingsRepository := adapters.NewTrainingsFirestoreRepository(client)
+	trainerGrpc := adapters.NewTrainerGrpc(trainerClient)
+	usersGrpc := adapters.NewUsersGrpc(usersClient)
+
+	trainingsService := app.NewTrainingsService(trainingsRepository, trainerGrpc, usersGrpc)
 
 	server.RunHTTPServer(func(router chi.Router) http.Handler {
-		return HandlerFromMux(HttpServer{firebaseDB}, router)
+		return ports.HandlerFromMux(ports.NewHttpServer(trainingsService), router)
 	})
 }

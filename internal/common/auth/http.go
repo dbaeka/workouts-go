@@ -2,7 +2,7 @@ package auth
 
 import (
 	"context"
-	"errors"
+	commonerrors "github.com/dbaeka/workouts-go/internal/common/errors"
 	"net/http"
 	"strings"
 
@@ -65,7 +65,7 @@ const (
 )
 
 var (
-	NoUserInContextError = errors.New("no user in context")
+	NoUserInContextError = commonerrors.NewAuthorizationError("no user in context", "no-user-found")
 )
 
 func UserFromCtx(ctx context.Context) (User, error) {

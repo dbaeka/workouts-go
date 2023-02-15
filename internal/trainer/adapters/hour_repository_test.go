@@ -1,4 +1,4 @@
-package main_test
+package adapters_test
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dbaeka/workouts-go/internal/trainer"
+	"github.com/dbaeka/workouts-go/internal/trainer/adapters"
 	"github.com/dbaeka/workouts-go/internal/trainer/domain/hour"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,11 +24,11 @@ var testHourFactory = hour.MustNewFactory(hour.FactoryConfig{
 	MaxUtcHour:               24,
 })
 
-func newMySQLRepository(t *testing.T) *main.MySQLHourRepository {
-	db, err := main.NewMySQLConnection()
+func newMySQLRepository(t *testing.T) *adapters.MySQLHourRepository {
+	db, err := adapters.NewMySQLConnection()
 	require.NoError(t, err)
 
-	return main.NewMySQLHourRepository(db, testHourFactory)
+	return adapters.NewMySQLHourRepository(db, testHourFactory)
 }
 
 func newValidAvailableHour(t *testing.T) *hour.Hour {
@@ -83,7 +83,7 @@ func createRepositories(t *testing.T) []Repository {
 		},
 		{
 			Name:       "memory",
-			Repository: main.NewMemoryHourRepository(testHourFactory),
+			Repository: adapters.NewMemoryHourRepository(testHourFactory),
 		},
 	}
 }

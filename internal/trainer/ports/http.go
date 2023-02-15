@@ -1,23 +1,28 @@
-package main
+package ports
 
 import (
+	"github.com/dbaeka/workouts-go/internal/trainer/app"
 	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 	"net/http"
 
 	"github.com/dbaeka/workouts-go/internal/common/auth"
 	"github.com/dbaeka/workouts-go/internal/common/server/httperr"
-	"github.com/dbaeka/workouts-go/internal/trainer/domain/hour"
 	"github.com/go-chi/render"
 )
 
 type HttpServer struct {
-	db             db
-	hourRepository hour.Repository
+	service app.HourService
 }
 
-func dateModelsToResponse(models []DateModel) []Date {
+func NewHttpServer(service app.HourService) HttpServer {
+	return HttpServer{
+		service: service,
+	}
+}
+
+func appDatesToResponse(appDates []app.Date) []Date {
 	var dates []Date
-	for _, d := range models {
+	for _, d := range appDates {
 		var hours []Hour
 		for _, h := range d.Hours {
 			hours = append(hours, Hour{
@@ -45,44 +50,39 @@ func (h HttpServer) GetTrainerAvailableHours(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	dateModels, err := h.db.GetDates(r.Context(), &queryParams)
+	appDates, err := h.service.GetTrainerAvailableHours(r.Context(), queryParams.DateFrom, queryParams.DateTo)
+
 	if err != nil {
-		httperr.InternalError("unable-to-get-dates", err, w, r)
+		httperr.RespondWithSlugError(err, w, r)
 		return
 	}
 
-	dates := dateModelsToResponse(dateModels)
+	dates := appDatesToResponse(appDates)
 	render.Respond(w, r, dates)
 }
 
 func (h HttpServer) MakeHourAvailable(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.UserFromCtx(r.Context())
 	if err != nil {
-		httperr.Unauthorized("no-user-found", err, w, r)
+		httperr.RespondWithSlugError(err, w, r)
 		return
 	}
 
 	if user.Role != "trainer" {
-		httperr.Unauthorized("invalid-role", nil, w, r)
+		httperr.RespondWithSlugError(nil, w, r)
 		return
 	}
 
 	hourUpdate := &HourUpdate{}
 	if err := render.Decode(r, hourUpdate); err != nil {
-		httperr.BadRequest("unable-to-update-availability", err, w, r)
+		httperr.RespondWithSlugError(err, w, r)
 		return
 	}
 
-	for _, hourToUpdate := range hourUpdate.Hours {
-		if err := h.hourRepository.UpdateHour(r.Context(), hourToUpdate, func(h *hour.Hour) (*hour.Hour, error) {
-			if err := h.MakeAvailable(); err != nil {
-				return nil, err
-			}
-			return h, nil
-		}); err != nil {
-			httperr.InternalError("unable-to-update-availability", err, w, r)
-			return
-		}
+	err = h.service.MakeHoursAvailable(r.Context(), hourUpdate.Hours)
+	if err != nil {
+		httperr.RespondWithSlugError(err, w, r)
+		return
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -90,30 +90,24 @@ func (h HttpServer) MakeHourAvailable(w http.ResponseWriter, r *http.Request) {
 func (h HttpServer) MakeHourUnavailable(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.UserFromCtx(r.Context())
 	if err != nil {
-		httperr.Unauthorized("no-user-found", err, w, r)
+		httperr.RespondWithSlugError(err, w, r)
 		return
 	}
 	if user.Role != "trainer" {
-		httperr.Unauthorized("invalid-role", nil, w, r)
+		httperr.RespondWithSlugError(nil, w, r)
 		return
 	}
 
 	hourUpdate := &HourUpdate{}
 	if err := render.Decode(r, hourUpdate); err != nil {
-		httperr.BadRequest("unable-to-update-availability", err, w, r)
+		httperr.RespondWithSlugError(err, w, r)
 		return
 	}
 
-	for _, hourToUpdate := range hourUpdate.Hours {
-		if err := h.hourRepository.UpdateHour(r.Context(), hourToUpdate, func(h *hour.Hour) (*hour.Hour, error) {
-			if err := h.MakeNotAvailable(); err != nil {
-				return nil, err
-			}
-			return h, nil
-		}); err != nil {
-			httperr.InternalError("unable-to-update-availability", err, w, r)
-			return
-		}
+	err = h.service.MakeHoursUnavailable(r.Context(), hourUpdate.Hours)
+	if err != nil {
+		httperr.RespondWithSlugError(err, w, r)
+		return
 	}
 
 	w.WriteHeader(http.StatusNoContent)

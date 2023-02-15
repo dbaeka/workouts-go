@@ -1,12 +1,12 @@
-package main
+package ports
 
 import (
 	"context"
 	"errors"
-	"github.com/dbaeka/workouts-go/internal/trainer/domain/hour"
 	"time"
 
 	"github.com/dbaeka/workouts-go/internal/common/genproto/trainer"
+	"github.com/dbaeka/workouts-go/internal/trainer/domain/hour"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -15,6 +15,16 @@ import (
 type GrpcServer struct {
 	hourRepository hour.Repository
 	trainer.UnimplementedTrainerServiceServer
+}
+
+func NewGrpcServer(hourRepository hour.Repository) GrpcServer {
+	if hourRepository == nil {
+		panic("missing hourRepository")
+	}
+
+	return GrpcServer{
+		hourRepository: hourRepository,
+	}
 }
 
 func (g GrpcServer) MakeHourAvailable(ctx context.Context, req *trainer.UpdateHourRequest) (*trainer.EmptyResponse, error) {

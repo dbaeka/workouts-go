@@ -1,14 +1,15 @@
 package main
 
 import (
-	"context"
 	"fmt"
+	"github.com/dbaeka/workouts-go/internal/trainer/adapters"
+	"github.com/dbaeka/workouts-go/internal/trainer/app"
 	"github.com/dbaeka/workouts-go/internal/trainer/domain/hour"
+	"github.com/dbaeka/workouts-go/internal/trainer/ports"
 	"net/http"
 	"os"
 	"strings"
 
-	"cloud.google.com/go/firestore"
 	"github.com/dbaeka/workouts-go/internal/common/genproto/trainer"
 	_ "github.com/dbaeka/workouts-go/internal/common/logs"
 	"github.com/dbaeka/workouts-go/internal/common/server"
@@ -17,13 +18,7 @@ import (
 )
 
 func main() {
-	ctx := context.Background()
-	firestoreClient, err := firestore.NewClient(ctx, os.Getenv("GCP_PROJECT"))
-	if err != nil {
-		panic(err)
-	}
-
-	mySQLDB, err := NewMySQLConnection()
+	mySQLDB, err := adapters.NewMySQLConnection()
 	if err != nil {
 		panic(err)
 	}
@@ -37,17 +32,25 @@ func main() {
 		panic(err)
 	}
 
+	datesRepository := adapters.NewMySQLDatesRepository(mySQLDB, hourFactory)
+	if datesRepository == nil {
+		panic(err)
+	}
+
+	hourRepository := adapters.NewMySQLHourRepository(mySQLDB, hourFactory)
+	service := app.NewHourService(datesRepository, hourRepository)
+
 	serverType := strings.ToLower(os.Getenv("SERVER_TO_RUN"))
 	switch serverType {
 	case "http":
-		go loadFixtures(mySQLDB)
+		go loadFixtures(datesRepository)
 
 		server.RunHTTPServer(func(router chi.Router) http.Handler {
-			return HandlerFromMux(HttpServer{firebaseDB, NewMySQLHourRepository(mySQLDB, hourFactory)}, router)
+			return ports.HandlerFromMux(ports.NewHttpServer(service), router)
 		})
 	case "grpc":
 		server.RunGRPCServer(func(server *grpc.Server) {
-			svc := GrpcServer{hourRepository: NewMySQLHourRepository(mySQLDB, hourFactory)}
+			svc := ports.NewGrpcServer(hourRepository)
 			trainer.RegisterTrainerServiceServer(server, svc)
 		})
 	default:
