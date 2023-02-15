@@ -10,8 +10,7 @@ import (
 )
 
 const (
-	day  = time.Hour * 24
-	week = day * 7
+	day = time.Hour * 24
 )
 
 var testHourFactory = hour.MustNewFactory(hour.FactoryConfig{

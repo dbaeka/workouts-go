@@ -4,8 +4,8 @@ import (
 	"context"
 	"github.com/dbaeka/workouts-go/internal/common/genproto/trainer"
 	"github.com/dbaeka/workouts-go/internal/common/genproto/users"
-	"github.com/golang/protobuf/ptypes"
 	"github.com/pkg/errors"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"sort"
 	"time"
 
@@ -60,9 +60,9 @@ func (d db) CreateTraining(ctx context.Context, user auth.User, training Trainin
 			return errors.Wrap(err, "unable to change trainings balance")
 		}
 
-		timestamp, err := ptypes.TimestampProto(training.Time)
-		if err != nil {
-			return errors.Wrap(err, "unable to convert time to proto timestamp")
+		timestamp := timestamppb.New(training.Time)
+		if timestamp == nil {
+			return errors.New("unable to convert time to proto timestamp")
 		}
 		_, err = d.trainerClient.ScheduleTraining(ctx, &trainer.UpdateHourRequest{
 			Time: timestamp,
@@ -120,9 +120,9 @@ func (d db) CancelTraining(ctx context.Context, user auth.User, trainingUUID str
 			}
 		}
 
-		timestamp, err := ptypes.TimestampProto(training.Time)
-		if err != nil {
-			return errors.Wrap(err, "unable to convert time to proto timestamp")
+		timestamp := timestamppb.New(training.Time)
+		if timestamp == nil {
+			return errors.New("unable to convert time to proto timestamp")
 		}
 		_, err = d.trainerClient.CancelTraining(ctx, &trainer.UpdateHourRequest{
 			Time: timestamp,
@@ -176,17 +176,17 @@ func (d db) RescheduleTraining(ctx context.Context, user auth.User, trainingUUID
 	})
 }
 func (d db) rescheduleTraining(ctx context.Context, oldTime, newTime time.Time) error {
-	oldTimeProto, err := ptypes.TimestampProto(oldTime)
-	if err != nil {
-		return errors.Wrap(err, "unable to convert time to proto timestamp")
+	oldTimeProto := timestamppb.New(oldTime)
+	if oldTimeProto == nil {
+		return errors.New("unable to convert time to proto timestamp")
 	}
 
-	newTimeProto, err := ptypes.TimestampProto(newTime)
-	if err != nil {
-		return errors.Wrap(err, "unable to convert time to proto timestamp")
+	newTimeProto := timestamppb.New(newTime)
+	if newTimeProto == nil {
+		return errors.New("unable to convert time to proto timestamp")
 	}
 
-	_, err = d.trainerClient.ScheduleTraining(ctx, &trainer.UpdateHourRequest{
+	_, err := d.trainerClient.ScheduleTraining(ctx, &trainer.UpdateHourRequest{
 		Time: newTimeProto,
 	})
 	if err != nil {
