@@ -1,6 +1,7 @@
 package main
 
 import (
+	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 	"net/http"
 
 	"github.com/dbaeka/workouts-go/internal/common/auth"
@@ -14,18 +15,43 @@ type HttpServer struct {
 	hourRepository hour.Repository
 }
 
+func dateModelsToResponse(models []DateModel) []Date {
+	var dates []Date
+	for _, d := range models {
+		var hours []Hour
+		for _, h := range d.Hours {
+			hours = append(hours, Hour{
+				Available:            h.Available,
+				HasTrainingScheduled: h.HasTrainingScheduled,
+				Hour:                 h.Hour,
+			})
+		}
+
+		dates = append(dates, Date{
+			Date: openapi_types.Date{
+				Time: d.Date,
+			},
+			HasFreeHours: d.HasFreeHours,
+			Hours:        hours,
+		})
+	}
+
+	return dates
+}
+
 func (h HttpServer) GetTrainerAvailableHours(w http.ResponseWriter, r *http.Request, queryParams GetTrainerAvailableHoursParams) {
 	if queryParams.DateFrom.After(queryParams.DateTo) {
 		httperr.BadRequest("date-from-after-date-to", nil, w, r)
 		return
 	}
 
-	dates, err := h.db.GetDates(r.Context(), &queryParams)
+	dateModels, err := h.db.GetDates(r.Context(), &queryParams)
 	if err != nil {
 		httperr.InternalError("unable-to-get-dates", err, w, r)
 		return
 	}
 
+	dates := dateModelsToResponse(dateModels)
 	render.Respond(w, r, dates)
 }
 

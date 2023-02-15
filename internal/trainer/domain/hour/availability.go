@@ -1,8 +1,6 @@
 package hour
 
-import (
-	"errors"
-)
+import "github.com/pkg/errors"
 
 // Availability is enum.
 //
@@ -24,11 +22,30 @@ var (
 	TrainingScheduled = Availability{"training_scheduled"}
 )
 
+var availabilityValues = []Availability{
+	Available,
+	NotAvailable,
+	TrainingScheduled,
+}
+
 var (
 	ErrTrainingScheduled   = errors.New("unable to modify hour, because scheduled training")
 	ErrNoTrainingScheduled = errors.New("training is not scheduled")
 	ErrHourNotAvailable    = errors.New("hour is not available")
 )
+
+func NewAvailabilityFromString(availabilityStr string) (Availability, error) {
+	for _, availability := range availabilityValues {
+		if availability.String() == availabilityStr {
+			return availability, nil
+		}
+	}
+	return Availability{}, errors.Errorf("unknown '%s' availability", availabilityStr)
+}
+
+func (h Availability) String() string {
+	return h.a
+}
 
 func (h Hour) IsAvailable() bool {
 	return h.availability == Available
@@ -72,4 +89,8 @@ func (h *Hour) CancelTraining() error {
 
 	h.availability = Available
 	return nil
+}
+
+func (h Hour) Availability() Availability {
+	return h.availability
 }

@@ -6,7 +6,7 @@ import (
 	"os"
 
 	grpcmiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
+	grpclogrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	grpcctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -20,16 +20,16 @@ func RunGRPCServer(registerServer func(server *grpc.Server)) {
 	grpcEndpoint := fmt.Sprintf(":%s", port)
 
 	logrusEntry := logrus.NewEntry(logrus.StandardLogger())
-	grpc_logrus.ReplaceGrpcLogger(logrusEntry)
+	grpclogrus.ReplaceGrpcLogger(logrusEntry)
 
 	grpcServer := grpc.NewServer(
 		grpcmiddleware.WithUnaryServerChain(
 			grpcctxtags.UnaryServerInterceptor(grpcctxtags.WithFieldExtractor(grpcctxtags.CodeGenRequestFieldExtractor)),
-			grpc_logrus.UnaryServerInterceptor(logrusEntry),
+			grpclogrus.UnaryServerInterceptor(logrusEntry),
 		),
 		grpcmiddleware.WithStreamServerChain(
 			grpcctxtags.StreamServerInterceptor(grpcctxtags.WithFieldExtractor(grpcctxtags.CodeGenRequestFieldExtractor)),
-			grpc_logrus.StreamServerInterceptor(logrusEntry),
+			grpclogrus.StreamServerInterceptor(logrusEntry),
 		),
 	)
 	registerServer(grpcServer)

@@ -33,9 +33,9 @@ func main() {
 	}
 	defer func() { _ = closeUsersClient() }()
 
-	firebaseDB := db{client}
+	firebaseDB := db{client, trainerClient, usersClient}
 
 	server.RunHTTPServer(func(router chi.Router) http.Handler {
-		return HandlerFromMux(HttpServer{firebaseDB, trainerClient, usersClient}, router)
+		return HandlerFromMux(HttpServer{firebaseDB}, router)
 	})
 }

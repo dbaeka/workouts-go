@@ -1,3 +1,5 @@
+include .env
+
 .PHONY: lint
 .PHONY: proto
 proto:
@@ -42,3 +44,18 @@ openapi_js:
   -g javascript \
   -o /local/web/src/repositories/clients/users
 
+.PHONY: mysql
+mysql:
+	mysql -u ${MYSQL_USERNAME} -p${MYSQL_PASSWORD} ${MYSQL_DATABASE}
+
+
+INTERNAL_PACKAGES := $(wildcard internal/*)
+
+ifeq (test,$(firstword $(MAKECMDGOALS)))
+  TEST_ARGS := $(subst $$,$$$$,$(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS)))
+  $(eval $(TEST_ARGS):;@:)
+endif
+.PHONY: test $(INTERNAL_PACKAGES)
+test: $(INTERNAL_PACKAGES)
+$(INTERNAL_PACKAGES):
+	@(cd $@ && go test -count=1 -race ./... $(subst $$$$,$$,$(TEST_ARGS)))

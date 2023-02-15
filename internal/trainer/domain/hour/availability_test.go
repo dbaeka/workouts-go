@@ -9,7 +9,7 @@ import (
 )
 
 func newNotAvailableHour(t *testing.T) *hour.Hour {
-	h, err := hour.NewAvailableHour(validTrainingHour())
+	h, err := testHourFactory.NewAvailableHour(validTrainingHour())
 	require.NoError(t, err)
 
 	require.NoError(t, h.MakeNotAvailable())
@@ -18,7 +18,7 @@ func newNotAvailableHour(t *testing.T) *hour.Hour {
 }
 
 func newHourWithScheduledTraining(t *testing.T) *hour.Hour {
-	h, err := hour.NewAvailableHour(validTrainingHour())
+	h, err := testHourFactory.NewAvailableHour(validTrainingHour())
 	require.NoError(t, err)
 
 	require.NoError(t, h.ScheduleTraining())
@@ -27,7 +27,7 @@ func newHourWithScheduledTraining(t *testing.T) *hour.Hour {
 }
 
 func TestHour_MakeNotAvailable(t *testing.T) {
-	h, err := hour.NewAvailableHour(validTrainingHour())
+	h, err := testHourFactory.NewAvailableHour(validTrainingHour())
 	require.NoError(t, err)
 
 	require.NoError(t, h.MakeNotAvailable())
@@ -41,7 +41,7 @@ func TestHour_MakeNotAvailable_with_scheduled_training(t *testing.T) {
 }
 
 func TestHour_MakeAvailable(t *testing.T) {
-	h, err := hour.NewAvailableHour(validTrainingHour())
+	h, err := testHourFactory.NewAvailableHour(validTrainingHour())
 	require.NoError(t, err)
 
 	require.NoError(t, h.MakeNotAvailable())
@@ -57,7 +57,7 @@ func TestHour_MakeAvailable_with_scheduled_training(t *testing.T) {
 }
 
 func TestHour_ScheduleTraining(t *testing.T) {
-	h, err := hour.NewAvailableHour(validTrainingHour())
+	h, err := testHourFactory.NewAvailableHour(validTrainingHour())
 	require.NoError(t, err)
 
 	require.NoError(t, h.ScheduleTraining())
@@ -81,8 +81,33 @@ func TestHour_CancelTraining(t *testing.T) {
 }
 
 func TestHour_CancelTraining_no_training_scheduled(t *testing.T) {
-	h, err := hour.NewAvailableHour(validTrainingHour())
+	h, err := testHourFactory.NewAvailableHour(validTrainingHour())
 	require.NoError(t, err)
 
 	assert.Equal(t, hour.ErrNoTrainingScheduled, h.CancelTraining())
+}
+
+func TestNewAvailabilityFromString(t *testing.T) {
+	testCases := []hour.Availability{
+		hour.Available,
+		hour.NotAvailable,
+		hour.TrainingScheduled,
+	}
+
+	for _, expectedAvailability := range testCases {
+		t.Run(expectedAvailability.String(), func(t *testing.T) {
+			availability, err := hour.NewAvailabilityFromString(expectedAvailability.String())
+			require.NoError(t, err)
+
+			assert.Equal(t, expectedAvailability, availability)
+		})
+	}
+}
+
+func TestNewAvailabilityFromString_invalid(t *testing.T) {
+	_, err := hour.NewAvailabilityFromString("invalid_value")
+	assert.Error(t, err)
+
+	_, err = hour.NewAvailabilityFromString("")
+	assert.Error(t, err)
 }
