@@ -2,9 +2,10 @@ package auth
 
 import (
 	"context"
-	commonerrors "github.com/dbaeka/workouts-go/internal/common/errors"
 	"net/http"
 	"strings"
+
+	commonerrors "github.com/dbaeka/workouts-go/internal/common/errors"
 
 	"firebase.google.com/go/auth"
 	"github.com/dbaeka/workouts-go/internal/common/server/httperr"

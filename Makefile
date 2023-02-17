@@ -59,3 +59,7 @@ endif
 test: $(INTERNAL_PACKAGES)
 $(INTERNAL_PACKAGES):
 	@(cd $@ && go test -count=1 -race ./... $(subst $$$$,$$,$(TEST_ARGS)))
+
+.PHONY: fmt
+fmt:
+	goimports -l -w internal/

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+
 	"github.com/dbaeka/workouts-go/internal/common/genproto/users"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

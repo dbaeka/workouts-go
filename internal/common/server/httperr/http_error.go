@@ -1,8 +1,9 @@
 package httperr
 
 import (
-	"github.com/dbaeka/workouts-go/internal/common/errors"
 	"net/http"
+
+	"github.com/dbaeka/workouts-go/internal/common/errors"
 
 	"github.com/dbaeka/workouts-go/internal/common/logs"
 	"github.com/go-chi/render"

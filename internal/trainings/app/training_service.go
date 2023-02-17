@@ -2,11 +2,12 @@ package app
 
 import (
 	"context"
+	"time"
+
 	"github.com/dbaeka/workouts-go/internal/common/auth"
 	commonerrors "github.com/dbaeka/workouts-go/internal/common/errors"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"time"
 )
 
 type userService interface {

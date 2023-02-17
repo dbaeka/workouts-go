@@ -2,10 +2,11 @@ package app
 
 import (
 	"context"
-	"github.com/dbaeka/workouts-go/internal/common/errors"
-	"github.com/dbaeka/workouts-go/internal/trainer/domain/hour"
 	"sort"
 	"time"
+
+	"github.com/dbaeka/workouts-go/internal/common/errors"
+	"github.com/dbaeka/workouts-go/internal/trainer/domain/hour"
 )
 
 type datesRepository interface {

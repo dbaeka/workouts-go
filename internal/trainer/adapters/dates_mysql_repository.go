@@ -3,9 +3,10 @@ package adapters
 import (
 	"context"
 	"database/sql"
+	"time"
+
 	"github.com/dbaeka/workouts-go/internal/trainer/domain/hour"
 	"github.com/pkg/errors"
-	"time"
 
 	"github.com/dbaeka/workouts-go/internal/trainer/app"
 	"github.com/jmoiron/sqlx"

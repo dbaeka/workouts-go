@@ -1,8 +1,9 @@
 package app
 
 import (
-	"github.com/dbaeka/workouts-go/internal/trainer/domain/hour"
 	"time"
+
+	"github.com/dbaeka/workouts-go/internal/trainer/domain/hour"
 )
 
 type Hour struct {

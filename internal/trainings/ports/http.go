@@ -1,13 +1,14 @@
 package ports
 
 import (
+	"net/http"
+
 	"github.com/dbaeka/workouts-go/internal/common/auth"
 	"github.com/dbaeka/workouts-go/internal/common/server/httperr"
 	"github.com/dbaeka/workouts-go/internal/trainings/app"
 	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
-	"net/http"
 )
 
 type HttpServer struct {
