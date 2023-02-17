@@ -1,25 +1,23 @@
 package main
 
 import (
-	"context"
+	"net/http"
+
+	grpcClient "github.com/dbaeka/workouts-go/internal/common/client"
+	_ "github.com/dbaeka/workouts-go/internal/common/logs"
+	"github.com/dbaeka/workouts-go/internal/common/server"
 	"github.com/dbaeka/workouts-go/internal/trainings/adapters"
 	"github.com/dbaeka/workouts-go/internal/trainings/app"
 	"github.com/dbaeka/workouts-go/internal/trainings/ports"
-	"net/http"
-	"os"
-
-	"cloud.google.com/go/firestore"
-	grpcClient "github.com/dbaeka/workouts-go/internal/common/client"
-	"github.com/dbaeka/workouts-go/internal/common/logs"
-	"github.com/dbaeka/workouts-go/internal/common/server"
 	"github.com/go-chi/chi/v5"
 )
 
 func main() {
-	logs.Init()
 
-	ctx := context.Background()
-	client, err := firestore.NewClient(ctx, os.Getenv("GCP_PROJECT"))
+	mySQLDB, err := adapters.NewMySQLConnection()
+	if err != nil {
+		panic(err)
+	}
 	if err != nil {
 		panic(err)
 	}
@@ -36,7 +34,7 @@ func main() {
 	}
 	defer func() { _ = closeUsersClient() }()
 
-	trainingsRepository := adapters.NewTrainingsFirestoreRepository(client)
+	trainingsRepository := adapters.NewMySQLTrainingsRepository(mySQLDB)
 	trainerGrpc := adapters.NewTrainerGrpc(trainerClient)
 	usersGrpc := adapters.NewUsersGrpc(usersClient)
 

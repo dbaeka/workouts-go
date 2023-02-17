@@ -2,10 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/dbaeka/workouts-go/internal/trainer/adapters"
-	"github.com/dbaeka/workouts-go/internal/trainer/app"
-	"github.com/dbaeka/workouts-go/internal/trainer/domain/hour"
-	"github.com/dbaeka/workouts-go/internal/trainer/ports"
 	"net/http"
 	"os"
 	"strings"
@@ -13,6 +9,10 @@ import (
 	"github.com/dbaeka/workouts-go/internal/common/genproto/trainer"
 	_ "github.com/dbaeka/workouts-go/internal/common/logs"
 	"github.com/dbaeka/workouts-go/internal/common/server"
+	"github.com/dbaeka/workouts-go/internal/trainer/adapters"
+	"github.com/dbaeka/workouts-go/internal/trainer/app"
+	"github.com/dbaeka/workouts-go/internal/trainer/domain/hour"
+	"github.com/dbaeka/workouts-go/internal/trainer/ports"
 	"github.com/go-chi/chi/v5"
 	"google.golang.org/grpc"
 )
