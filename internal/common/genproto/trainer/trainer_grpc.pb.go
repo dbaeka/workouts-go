@@ -8,7 +8,7 @@ package trainer
 
 import (
 	context "context"
-
+	empty "github.com/golang/protobuf/ptypes/empty"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -24,9 +24,9 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TrainerServiceClient interface {
 	IsHourAvailable(ctx context.Context, in *IsHourAvailableRequest, opts ...grpc.CallOption) (*IsHourAvailableResponse, error)
-	ScheduleTraining(ctx context.Context, in *UpdateHourRequest, opts ...grpc.CallOption) (*EmptyResponse, error)
-	CancelTraining(ctx context.Context, in *UpdateHourRequest, opts ...grpc.CallOption) (*EmptyResponse, error)
-	MakeHourAvailable(ctx context.Context, in *UpdateHourRequest, opts ...grpc.CallOption) (*EmptyResponse, error)
+	ScheduleTraining(ctx context.Context, in *UpdateHourRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	CancelTraining(ctx context.Context, in *UpdateHourRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	MakeHourAvailable(ctx context.Context, in *UpdateHourRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 }
 
 type trainerServiceClient struct {
@@ -46,8 +46,8 @@ func (c *trainerServiceClient) IsHourAvailable(ctx context.Context, in *IsHourAv
 	return out, nil
 }
 
-func (c *trainerServiceClient) ScheduleTraining(ctx context.Context, in *UpdateHourRequest, opts ...grpc.CallOption) (*EmptyResponse, error) {
-	out := new(EmptyResponse)
+func (c *trainerServiceClient) ScheduleTraining(ctx context.Context, in *UpdateHourRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
 	err := c.cc.Invoke(ctx, "/trainer.TrainerService/ScheduleTraining", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -55,8 +55,8 @@ func (c *trainerServiceClient) ScheduleTraining(ctx context.Context, in *UpdateH
 	return out, nil
 }
 
-func (c *trainerServiceClient) CancelTraining(ctx context.Context, in *UpdateHourRequest, opts ...grpc.CallOption) (*EmptyResponse, error) {
-	out := new(EmptyResponse)
+func (c *trainerServiceClient) CancelTraining(ctx context.Context, in *UpdateHourRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
 	err := c.cc.Invoke(ctx, "/trainer.TrainerService/CancelTraining", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -64,8 +64,8 @@ func (c *trainerServiceClient) CancelTraining(ctx context.Context, in *UpdateHou
 	return out, nil
 }
 
-func (c *trainerServiceClient) MakeHourAvailable(ctx context.Context, in *UpdateHourRequest, opts ...grpc.CallOption) (*EmptyResponse, error) {
-	out := new(EmptyResponse)
+func (c *trainerServiceClient) MakeHourAvailable(ctx context.Context, in *UpdateHourRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
 	err := c.cc.Invoke(ctx, "/trainer.TrainerService/MakeHourAvailable", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -78,9 +78,9 @@ func (c *trainerServiceClient) MakeHourAvailable(ctx context.Context, in *Update
 // for forward compatibility
 type TrainerServiceServer interface {
 	IsHourAvailable(context.Context, *IsHourAvailableRequest) (*IsHourAvailableResponse, error)
-	ScheduleTraining(context.Context, *UpdateHourRequest) (*EmptyResponse, error)
-	CancelTraining(context.Context, *UpdateHourRequest) (*EmptyResponse, error)
-	MakeHourAvailable(context.Context, *UpdateHourRequest) (*EmptyResponse, error)
+	ScheduleTraining(context.Context, *UpdateHourRequest) (*empty.Empty, error)
+	CancelTraining(context.Context, *UpdateHourRequest) (*empty.Empty, error)
+	MakeHourAvailable(context.Context, *UpdateHourRequest) (*empty.Empty, error)
 	mustEmbedUnimplementedTrainerServiceServer()
 }
 
@@ -91,13 +91,13 @@ type UnimplementedTrainerServiceServer struct {
 func (UnimplementedTrainerServiceServer) IsHourAvailable(context.Context, *IsHourAvailableRequest) (*IsHourAvailableResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IsHourAvailable not implemented")
 }
-func (UnimplementedTrainerServiceServer) ScheduleTraining(context.Context, *UpdateHourRequest) (*EmptyResponse, error) {
+func (UnimplementedTrainerServiceServer) ScheduleTraining(context.Context, *UpdateHourRequest) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ScheduleTraining not implemented")
 }
-func (UnimplementedTrainerServiceServer) CancelTraining(context.Context, *UpdateHourRequest) (*EmptyResponse, error) {
+func (UnimplementedTrainerServiceServer) CancelTraining(context.Context, *UpdateHourRequest) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CancelTraining not implemented")
 }
-func (UnimplementedTrainerServiceServer) MakeHourAvailable(context.Context, *UpdateHourRequest) (*EmptyResponse, error) {
+func (UnimplementedTrainerServiceServer) MakeHourAvailable(context.Context, *UpdateHourRequest) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method MakeHourAvailable not implemented")
 }
 func (UnimplementedTrainerServiceServer) mustEmbedUnimplementedTrainerServiceServer() {}

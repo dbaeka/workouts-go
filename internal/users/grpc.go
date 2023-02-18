@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/golang/protobuf/ptypes/empty"
 
 	"github.com/dbaeka/workouts-go/internal/common/genproto/users"
 	"google.golang.org/grpc/codes"
@@ -31,11 +32,11 @@ func (g GrpcServer) GetTrainingBalance(
 func (g GrpcServer) UpdateTrainingBalance(
 	ctx context.Context,
 	r *users.UpdateTrainingBalanceRequest,
-) (*users.EmptyResponse, error) {
+) (*empty.Empty, error) {
 	err := g.db.UpdateBalance(ctx, r.UserId, int(r.AmountChange))
 	if err != nil {
 		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to update balance: %s", err))
 	}
 
-	return &users.EmptyResponse{}, nil
+	return &empty.Empty{}, nil
 }

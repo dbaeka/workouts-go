@@ -12,6 +12,10 @@ import (
 	"google.golang.org/grpc"
 )
 
+func init() {
+	grpclogrus.ReplaceGrpcLogger(logrus.NewEntry(logrus.StandardLogger()))
+}
+
 func RunGRPCServer(registerServer func(server *grpc.Server)) {
 	port := os.Getenv("PORT")
 	if port == "" {

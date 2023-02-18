@@ -54,7 +54,7 @@ func (f FactoryConfig) Validate() error {
 		err = multierr.Append(
 			err,
 			errors.Errorf(
-				"MaxUtcHour (%d) can't be after MinUtcHour (%d)",
+				"MaxUtcHour (%d) can't be before MinUtcHour (%d)",
 				f.MaxUtcHour, f.MinUtcHour,
 			),
 		)

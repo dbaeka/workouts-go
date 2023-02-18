@@ -173,7 +173,7 @@ func TestFactoryConfig_Validate(t *testing.T) {
 				MinUtcHour:               13,
 				MaxUtcHour:               12,
 			},
-			ExpectedErr: "MaxUtcHour (12) can't be after MinUtcHour (13)",
+			ExpectedErr: "MaxUtcHour (12) can't be before MinUtcHour (13)",
 		},
 		{
 			Name: "zero_max_weeks",
@@ -200,7 +200,7 @@ func TestFactoryConfig_Validate(t *testing.T) {
 				MinUtcHour:               10,
 				MaxUtcHour:               -1,
 			},
-			ExpectedErr: "MinUtcHour should be value between 0 and 24, but is -1; MaxUtcHour (-1) can't be after MinUtcHour (10)",
+			ExpectedErr: "MinUtcHour should be value between 0 and 24, but is -1; MaxUtcHour (-1) can't be before MinUtcHour (10)",
 		},
 	}
 
