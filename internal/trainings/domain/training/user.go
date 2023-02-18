@@ -34,7 +34,7 @@ func NewUserTypeFromString(userType string) (UserType, error) {
 		return Attendee, nil
 	}
 
-	return UserType{}, commonerrors.NewSlugError(
+	return UserType{}, commonerrors.NewIncorrectInputError(
 		fmt.Sprintf("invalid '%s' role", userType),
 		"invalid-role",
 	)
