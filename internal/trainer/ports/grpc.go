@@ -3,28 +3,22 @@ package ports
 import (
 	"context"
 	"errors"
+	"github.com/dbaeka/workouts-go/internal/trainer/app"
 	"time"
 
 	"github.com/dbaeka/workouts-go/internal/common/genproto/trainer"
-	"github.com/dbaeka/workouts-go/internal/trainer/domain/hour"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 type GrpcServer struct {
-	hourRepository hour.Repository
+	app app.Application
 	trainer.UnimplementedTrainerServiceServer
 }
 
-func NewGrpcServer(hourRepository hour.Repository) GrpcServer {
-	if hourRepository == nil {
-		panic("missing hourRepository")
-	}
-
-	return GrpcServer{
-		hourRepository: hourRepository,
-	}
+func NewGrpcServer(app app.Application) GrpcServer {
+	return GrpcServer{app: app}
 }
 
 func (g GrpcServer) MakeHourAvailable(ctx context.Context, req *trainer.UpdateHourRequest) (*trainer.EmptyResponse, error) {
@@ -33,13 +27,7 @@ func (g GrpcServer) MakeHourAvailable(ctx context.Context, req *trainer.UpdateHo
 		return nil, status.Error(codes.InvalidArgument, "unable to parse time")
 	}
 
-	if err := g.hourRepository.UpdateHour(ctx, trainingTime, func(h *hour.Hour) (*hour.Hour, error) {
-		if err := h.MakeAvailable(); err != nil {
-			return nil, err
-		}
-
-		return h, nil
-	}); err != nil {
+	if err := g.app.Commands.MakeHoursAvailable.Handle(ctx, []time.Time{trainingTime}); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
@@ -52,12 +40,7 @@ func (g GrpcServer) ScheduleTraining(ctx context.Context, request *trainer.Updat
 		return nil, status.Error(codes.InvalidArgument, "unable to parse time")
 	}
 
-	if err := g.hourRepository.UpdateHour(ctx, trainingTime, func(h *hour.Hour) (*hour.Hour, error) {
-		if err := h.ScheduleTraining(); err != nil {
-			return nil, err
-		}
-		return h, nil
-	}); err != nil {
+	if err := g.app.Commands.ScheduleTraining.Handle(ctx, trainingTime); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
@@ -70,12 +53,7 @@ func (g GrpcServer) CancelTraining(ctx context.Context, request *trainer.UpdateH
 		return nil, status.Error(codes.InvalidArgument, "unable to parse time")
 	}
 
-	if err := g.hourRepository.UpdateHour(ctx, trainingTime, func(h *hour.Hour) (*hour.Hour, error) {
-		if err := h.CancelTraining(); err != nil {
-			return nil, err
-		}
-		return h, nil
-	}); err != nil {
+	if err := g.app.Commands.CancelTraining.Handle(ctx, trainingTime); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
@@ -88,12 +66,12 @@ func (g GrpcServer) IsHourAvailable(ctx context.Context, req *trainer.IsHourAvai
 		return nil, status.Error(codes.InvalidArgument, "unable to parse time")
 	}
 
-	h, err := g.hourRepository.GetOrCreateHour(ctx, trainingTime)
+	isAvailable, err := g.app.Queries.HourAvailability.Handle(ctx, trainingTime)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return &trainer.IsHourAvailableResponse{IsAvailable: h.IsAvailable()}, nil
+	return &trainer.IsHourAvailableResponse{IsAvailable: isAvailable}, nil
 }
 
 func protoTimestampToTime(timestamp *timestamp.Timestamp) (time.Time, error) {

@@ -46,5 +46,8 @@ type Trainings struct {
 // CreateTrainingJSONRequestBody defines body for CreateTraining for application/json ContentType.
 type CreateTrainingJSONRequestBody = PostTraining
 
+// RequestRescheduleTrainingJSONRequestBody defines body for RequestRescheduleTraining for application/json ContentType.
+type RequestRescheduleTrainingJSONRequestBody = PostTraining
+
 // RescheduleTrainingJSONRequestBody defines body for RescheduleTraining for application/json ContentType.
 type RescheduleTrainingJSONRequestBody = PostTraining

@@ -7,8 +7,9 @@ import (
 	"sort"
 	"time"
 
-	"github.com/dbaeka/workouts-go/internal/common/auth"
-	"github.com/dbaeka/workouts-go/internal/trainings/app"
+	"github.com/dbaeka/workouts-go/internal/trainings/app/query"
+	"github.com/dbaeka/workouts-go/internal/trainings/domain/training"
+
 	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
@@ -25,6 +26,8 @@ type mysqlTraining struct {
 
 	ProposedTime   *time.Time `db:"proposed_time"`
 	MoveProposedBy *string    `db:"move_proposed_by"`
+
+	Canceled bool `db:"canceled"`
 }
 
 type MySQLTrainingsRepository struct {
@@ -37,11 +40,81 @@ func NewMySQLTrainingsRepository(db *sqlx.DB) MySQLTrainingsRepository {
 	}
 }
 
-func dbTrainingsToApp(dbTrainings []mysqlTraining) ([]app.Training, error) {
-	var trainings []app.Training
+func (r MySQLTrainingsRepository) marshalTraining(tr *training.Training) mysqlTraining {
+	dbTraining := mysqlTraining{
+		UUID:     tr.UUID(),
+		UserUUID: tr.UserUUID(),
+		User:     tr.UserName(),
+		Time:     tr.Time(),
+		Notes:    tr.Notes(),
+		Canceled: tr.IsCanceled(),
+	}
 
-	for _, dbTraining := range dbTrainings {
-		trainings = append(trainings, app.Training(dbTraining))
+	if tr.IsRescheduleProposed() {
+		proposedBy := tr.MovedProposedBy().String()
+		proposedTime := tr.ProposedNewTime()
+
+		dbTraining.MoveProposedBy = &proposedBy
+		dbTraining.ProposedTime = &proposedTime
+	}
+
+	return dbTraining
+}
+
+func (r MySQLTrainingsRepository) unmarshalTraining(dbTraining *mysqlTraining) (*training.Training, error) {
+	var moveProposedBy training.UserType
+	var err error
+	if dbTraining.MoveProposedBy != nil {
+		moveProposedBy, err = training.NewUserTypeFromString(*dbTraining.MoveProposedBy)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var proposedTime time.Time
+	if dbTraining.ProposedTime != nil {
+		proposedTime = *dbTraining.ProposedTime
+	}
+
+	return training.UnmarshalTrainingFromDatabase(
+		dbTraining.UUID,
+		dbTraining.UserUUID,
+		dbTraining.User,
+		dbTraining.Time,
+		dbTraining.Notes,
+		dbTraining.Canceled,
+		proposedTime,
+		moveProposedBy,
+	)
+}
+
+func (r MySQLTrainingsRepository) trainingModelsToQuery(dbTrainings *[]mysqlTraining) ([]query.Training, error) {
+	var trainings []query.Training
+
+	for _, dbTraining := range *dbTrainings {
+		tr, err := r.unmarshalTraining(&dbTraining)
+		if err != nil {
+			return nil, err
+		}
+
+		queryTraining := query.Training{
+			UUID:           tr.UUID(),
+			UserUUID:       tr.UserUUID(),
+			User:           tr.UserName(),
+			Time:           tr.Time(),
+			Notes:          tr.Notes(),
+			CanBeCancelled: tr.CanBeCanceledForFree(),
+		}
+
+		if tr.IsRescheduleProposed() {
+			proposedTime := tr.ProposedNewTime()
+			queryTraining.ProposedTime = &proposedTime
+
+			proposedBy := tr.MovedProposedBy().String()
+			queryTraining.MoveProposedBy = &proposedBy
+		}
+
+		trainings = append(trainings, queryTraining)
 	}
 
 	sort.Slice(trainings, func(i, j int) bool { return trainings[i].Time.Before(trainings[j].Time) })
@@ -49,39 +122,39 @@ func dbTrainingsToApp(dbTrainings []mysqlTraining) ([]app.Training, error) {
 	return trainings, nil
 }
 
-func (d MySQLTrainingsRepository) AllTrainings(ctx context.Context) ([]app.Training, error) {
-	return d.getTrainings(ctx, nil)
+func (r MySQLTrainingsRepository) AllTrainings(ctx context.Context) ([]query.Training, error) {
+	return r.getTrainings(ctx, nil)
 }
 
-func (d MySQLTrainingsRepository) FindTrainingsForUser(ctx context.Context, user auth.User) ([]app.Training, error) {
-	return d.getTrainings(ctx, &user)
+func (r MySQLTrainingsRepository) FindTrainingsForUser(ctx context.Context, userUUID string) ([]query.Training, error) {
+	return r.getTrainings(ctx, &userUUID)
 }
 
-func (d MySQLTrainingsRepository) getTrainings(ctx context.Context, user *auth.User) ([]app.Training, error) {
+func (r MySQLTrainingsRepository) getTrainings(ctx context.Context, userUUID *string) ([]query.Training, error) {
 	var dbTrainings []mysqlTraining
 
-	query := "SELECT * FROM `trainings` WHERE `time` >= ?"
+	sqlQuery := "SELECT * FROM `trainings` WHERE `time` >= ?"
 
 	var err error
-	if user != nil {
-		query = query + " AND `user_uuid` = ?"
-		err = d.db.GetContext(ctx, &dbTrainings, query, time.Now().Add(-time.Hour*24), user.UUID)
+	if userUUID != nil {
+		sqlQuery = sqlQuery + " AND `user_uuid` = ?"
+		err = r.db.GetContext(ctx, &dbTrainings, sqlQuery, time.Now().Add(-time.Hour*24), userUUID)
 	} else {
-		err = d.db.GetContext(ctx, &dbTrainings, query, time.Now().Add(-time.Hour*24))
+		err = r.db.GetContext(ctx, &dbTrainings, sqlQuery, time.Now().Add(-time.Hour*24))
 	}
 
 	if errors.Is(err, sql.ErrNoRows) {
 		// in reality this date exists, even if it's not persisted
-		return []app.Training{}, nil
+		return []query.Training{}, nil
 	} else if err != nil {
-		return nil, errors.Wrap(err, "unable to get hour from db")
+		return nil, errors.Wrap(err, "unable to get training from db")
 	}
 
-	return dbTrainingsToApp(dbTrainings)
+	return r.trainingModelsToQuery(&dbTrainings)
 }
 
-func (d MySQLTrainingsRepository) CreateTraining(_ context.Context, training app.Training, createFn func() error) error {
-	tx, err := d.db.Beginx()
+func (r MySQLTrainingsRepository) AddTraining(_ context.Context, tr *training.Training) error {
+	tx, err := r.db.Beginx()
 	if err != nil {
 		return errors.Wrap(err, "unable to start transaction")
 	}
@@ -89,94 +162,68 @@ func (d MySQLTrainingsRepository) CreateTraining(_ context.Context, training app
 	// Defer is executed on function just before exit.
 	// With defer, we are always sure that we will close our transaction properly.
 	defer func() {
-		err = d.finishTransaction(err, tx)
+		err = r.finishTransaction(err, tx)
 	}()
 
-	dbTraining := mysqlTraining(training)
+	dbTraining := r.marshalTraining(tr)
 
-	err = createFn()
-	if err != nil {
-		return err
-	}
-
-	if err := d.upsertTraining(tx, &dbTraining); err != nil {
+	if err := r.upsertTraining(tx, &dbTraining); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (d MySQLTrainingsRepository) getTraining(
-	ctx context.Context,
-	trainingUUID *string,
-	hourTime *time.Time,
-	forUpdate bool,
-) (*app.Training, error) {
-	dbTraining := mysqlTraining{}
-
-	var query string
-
-	if forUpdate {
-		query += " FOR UPDATE"
-	}
-
-	var err error
-	if trainingUUID != nil {
-		query = "SELECT * FROM `trainings` WHERE `uuid` = ?" + query
-		err = d.db.GetContext(ctx, &dbTraining, query, trainingUUID)
-
-	} else if hourTime != nil {
-		query = "SELECT * FROM `trainings` WHERE `time` = ?" + query
-		err = d.db.GetContext(ctx, &dbTraining, query, hourTime)
-	}
-
-	if errors.Is(err, sql.ErrNoRows) {
-		// in reality this date exists, even if it's not persisted
-		return nil, nil
-	} else if err != nil {
-		return nil, errors.Wrap(err, "unable to get hour from db")
-	}
-	appTraining := app.Training(dbTraining)
-	return &appTraining, nil
-}
-
-func (d MySQLTrainingsRepository) CancelTraining(ctx context.Context, trainingUUID string, deleteFn func(app.Training) error) error {
-	tx, err := d.db.Beginx()
-	if err != nil {
-		return errors.Wrap(err, "unable to start transaction")
-	}
-
-	// Defer is executed on function just before exit.
-	// With defer, we are always sure that we will close our transaction properly.
-	defer func() {
-		err = d.finishTransaction(err, tx)
-	}()
-
-	appTraining, err := d.getTraining(ctx, &trainingUUID, nil, true)
-	if err != nil || appTraining == nil {
-		return err
-	}
-
-	err = deleteFn(*appTraining)
-	if err != nil {
-		return err
-	}
-
-	dbTraining := mysqlTraining(*appTraining)
-	if err := d.deleteTraining(tx, &dbTraining); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (d MySQLTrainingsRepository) RescheduleTraining(
+func (r MySQLTrainingsRepository) GetTraining(
 	ctx context.Context,
 	trainingUUID string,
-	newTime time.Time,
-	updateFn func(app.Training) (app.Training, error),
-) error {
-	tx, err := d.db.Beginx()
+	user training.User,
+) (*training.Training, error) {
+	return r.getTraining(ctx, trainingUUID, user, false)
+}
+
+func (r MySQLTrainingsRepository) getTraining(
+	ctx context.Context,
+	trainingUUID string,
+	user training.User,
+	forUpdate bool,
+) (*training.Training, error) {
+	dbTraining := mysqlTraining{}
+
+	var sqlQuery string
+
+	if forUpdate {
+		sqlQuery += " FOR UPDATE"
+	}
+
+	var err error
+	sqlQuery = "SELECT * FROM `trainings` WHERE `uuid` = ?" + sqlQuery
+	err = r.db.GetContext(ctx, &dbTraining, sqlQuery, trainingUUID)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		// in reality this date exists, even if it's not persisted
+		return nil, training.NotFoundError{TrainingUUID: trainingUUID}
+	} else if err != nil {
+		return nil, errors.Wrap(err, "unable to get training from db")
+	}
+
+	tr, err := r.unmarshalTraining(&dbTraining)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := training.CanUserSeeTraining(user, *tr); err != nil {
+		return nil, err
+	}
+	return tr, nil
+}
+
+func (r MySQLTrainingsRepository) UpdateTraining(
+	ctx context.Context,
+	trainingUUID string,
+	user training.User,
+	updateFn func(ctx context.Context, tr *training.Training) (*training.Training, error)) error {
+	tx, err := r.db.Beginx()
 	if err != nil {
 		return errors.Wrap(err, "unable to start transaction")
 	}
@@ -184,84 +231,33 @@ func (d MySQLTrainingsRepository) RescheduleTraining(
 	// Defer is executed on function just before exit.
 	// With defer, we are always sure that we will close our transaction properly.
 	defer func() {
-		err = d.finishTransaction(err, tx)
+		err = r.finishTransaction(err, tx)
 	}()
 
-	appTraining, err := d.getTraining(ctx, &trainingUUID, nil, true)
+	appTraining, err := r.getTraining(ctx, trainingUUID, user, true)
 	if err != nil || appTraining == nil {
 		return err
 	}
 
-	// check if new time already taken
-	existingTraining, err := d.getTraining(ctx, nil, &newTime, false)
+	updatedTraining, err := updateFn(ctx, appTraining)
 	if err != nil {
 		return err
 	}
 
-	if existingTraining != nil {
-		return errors.Errorf("there is training already at %s", newTime)
-	}
-
-	updatedTraining, err := updateFn(*appTraining)
-	if err != nil {
-		return err
-	}
-
-	dbTraining := mysqlTraining(updatedTraining)
-	if err := d.upsertTraining(tx, &dbTraining); err != nil {
+	dbTraining := r.marshalTraining(updatedTraining)
+	if err := r.upsertTraining(tx, &dbTraining); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (d MySQLTrainingsRepository) ApproveTrainingReschedule(ctx context.Context, trainingUUID string, updateFn func(app.Training) (app.Training, error)) error {
-	return d.updateTraining(ctx, trainingUUID, updateFn)
-}
-
-func (d MySQLTrainingsRepository) RejectTrainingReschedule(ctx context.Context, trainingUUID string, updateFn func(app.Training) (app.Training, error)) error {
-	return d.updateTraining(ctx, trainingUUID, updateFn)
-}
-
-func (d MySQLTrainingsRepository) updateTraining(ctx context.Context, trainingUUID string, updateFn func(app.Training) (app.Training, error)) error {
-	tx, err := d.db.Beginx()
+// RemoveAllTrainings was designed for tests for doing data cleanups
+func (r MySQLTrainingsRepository) RemoveAllTrainings(ctx context.Context) error {
+	sqlQuery := `TRUNCATE trainings`
+	_, err := r.db.ExecContext(ctx, sqlQuery)
 	if err != nil {
-		return errors.Wrap(err, "unable to start transaction")
-	}
-
-	// Defer is executed on function just before exit.
-	// With defer, we are always sure that we will close our transaction properly.
-	defer func() {
-		err = d.finishTransaction(err, tx)
-	}()
-
-	appTraining, err := d.getTraining(ctx, &trainingUUID, nil, true)
-	if err != nil || appTraining == nil {
-		return err
-	}
-
-	updatedTraining, err := updateFn(*appTraining)
-	if err != nil {
-		return err
-	}
-
-	dbTraining := mysqlTraining(updatedTraining)
-	if err := d.upsertTraining(tx, &dbTraining); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// deleteTraining updates training if training already exists in the database.
-// If it doesn't exist, it's inserted.
-func (d MySQLTrainingsRepository) deleteTraining(tx *sqlx.Tx, trainingToDelete *mysqlTraining) error {
-	_, err := tx.NamedExec(
-		`DELETE FROM trainings WHERE uuid = :uuid`,
-		trainingToDelete,
-	)
-	if err != nil {
-		return errors.Wrap(err, "unable to delete training")
+		return errors.Wrap(err, "unable to delete all trainings")
 	}
 
 	return nil
@@ -269,7 +265,7 @@ func (d MySQLTrainingsRepository) deleteTraining(tx *sqlx.Tx, trainingToDelete *
 
 // upsertTraining updates training if training already exists in the database.
 // If it doesn't exist, it's inserted.
-func (d MySQLTrainingsRepository) upsertTraining(tx *sqlx.Tx, trainingToUpdate *mysqlTraining) error {
+func (r MySQLTrainingsRepository) upsertTraining(tx *sqlx.Tx, trainingToUpdate *mysqlTraining) error {
 	_, err := tx.NamedExec(
 		`INSERT INTO 
 			trainings (uuid, user_uuid, user, time, notes, proposed_time, move_proposed_by) 
@@ -286,7 +282,7 @@ func (d MySQLTrainingsRepository) upsertTraining(tx *sqlx.Tx, trainingToUpdate *
 	return nil
 }
 
-func (d MySQLTrainingsRepository) finishTransaction(err error, tx *sqlx.Tx) error {
+func (r MySQLTrainingsRepository) finishTransaction(err error, tx *sqlx.Tx) error {
 	if err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
 			return multierr.Combine(err, rollbackErr)

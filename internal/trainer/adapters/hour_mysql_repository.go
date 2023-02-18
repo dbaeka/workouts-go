@@ -40,7 +40,7 @@ type sqlContextGetter interface {
 	GetContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
 }
 
-func (m MySQLHourRepository) GetOrCreateHour(ctx context.Context, time time.Time) (*hour.Hour, error) {
+func (m MySQLHourRepository) GetHour(ctx context.Context, time time.Time) (*hour.Hour, error) {
 	return m.getOrCreateHour(ctx, m.db, time, false)
 }
 
@@ -78,7 +78,25 @@ func (m MySQLHourRepository) getOrCreateHour(
 	return domainHour, nil
 }
 
+const mySQLDeadlockErrorCode = 1213
+
 func (m MySQLHourRepository) UpdateHour(
+	ctx context.Context,
+	hourTime time.Time,
+	updateFn func(h *hour.Hour) (*hour.Hour, error),
+) error {
+	for {
+		err := m.updateHour(ctx, hourTime, updateFn)
+
+		if val, ok := err.(*mysql.MySQLError); ok && val.Number == mySQLDeadlockErrorCode {
+			continue
+		}
+
+		return err
+	}
+}
+
+func (m MySQLHourRepository) updateHour(
 	ctx context.Context,
 	hourTime time.Time,
 	updateFn func(h *hour.Hour) (*hour.Hour, error),

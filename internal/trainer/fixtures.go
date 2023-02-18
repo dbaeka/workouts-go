@@ -2,21 +2,17 @@ package main
 
 import (
 	"context"
+	"github.com/dbaeka/workouts-go/internal/trainer/app"
+	"github.com/dbaeka/workouts-go/internal/trainer/app/query"
 	"math/rand"
 	"time"
 
 	"github.com/dbaeka/workouts-go/internal/common/client"
-	"github.com/dbaeka/workouts-go/internal/common/genproto/trainer"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type fixturesChecker interface {
-	CanLoadFixtures(ctx context.Context, daysToSet int) (bool, error)
-}
-
-func loadFixtures(checker fixturesChecker) {
+func loadFixtures(application app.Application) {
 	start := time.Now()
 	ctx := context.Background()
 
@@ -28,26 +24,12 @@ func loadFixtures(checker fixturesChecker) {
 	}
 
 	logrus.WithField("after", time.Now().Sub(start)).Debug("Trainer service is available")
-
-	var canLoad bool
-	var err error
-
-	for {
-		canLoad, err = checker.CanLoadFixtures(ctx, daysToSet)
-		if err == nil {
-			break
-		}
-		logrus.WithError(err).Error("Cannot check if fixtures can be loaded")
-		time.Sleep(10 * time.Second)
-	}
-
-	if !canLoad {
+	if !canLoadFixtures(application, ctx) {
 		logrus.Debug("Trainer fixtures are already loaded")
 		return
 	}
-
 	for {
-		err = loadTrainerFixtures(ctx)
+		err := loadTrainerFixtures(ctx, application)
 		if err == nil {
 			break
 		}
@@ -61,17 +43,11 @@ func loadFixtures(checker fixturesChecker) {
 
 const daysToSet = 30
 
-func loadTrainerFixtures(ctx context.Context) error {
-	trainerClient, closeTrainerClient, err := client.NewTrainerClient()
-	if err != nil {
-		return err
-	}
-	defer func() { _ = closeTrainerClient() }()
-
-	maxDate := time.Now().Add(time.Hour * 24 * daysToSet)
+func loadTrainerFixtures(ctx context.Context, application app.Application) error {
+	maxDate := time.Now().AddDate(0, 0, daysToSet)
 	localRand := rand.New(rand.NewSource(3))
 
-	for date := time.Now(); date.Before(maxDate); date = date.Add(time.Hour * 24) {
+	for date := time.Now(); date.Before(maxDate); date = date.AddDate(0, 0, 1) {
 		for hour := 12; hour <= 20; hour++ {
 			trainingTime := time.Date(date.Year(), date.Month(), date.Day(), hour, 0, 0, 0, time.UTC)
 
@@ -80,15 +56,8 @@ func loadTrainerFixtures(ctx context.Context) error {
 				continue
 			}
 
-			ts := timestamppb.New(trainingTime)
-			if ts == nil {
-				return errors.Wrapf(err, "unable to marshal time %s", trainingTime)
-			}
-
 			if localRand.NormFloat64() > 0 {
-				_, err = trainerClient.MakeHourAvailable(ctx, &trainer.UpdateHourRequest{
-					Time: ts,
-				})
+				err := application.Commands.MakeHoursAvailable.Handle(ctx, []time.Time{trainingTime})
 				if err != nil {
 					return errors.Wrap(err, "unable to update hour")
 				}
@@ -97,4 +66,28 @@ func loadTrainerFixtures(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func canLoadFixtures(app app.Application, ctx context.Context) bool {
+	for {
+		dates, err := app.Queries.TrainerAvailableHours.Handle(ctx, query.AvailableHours{
+			From: time.Now(),
+			To:   time.Now().AddDate(0, 0, daysToSet),
+		})
+		if err == nil {
+			for _, date := range dates {
+				for _, hour := range date.Hours {
+					if hour.Available {
+						// we don't need fixtures if any hour is already available for training
+						return false
+					}
+				}
+			}
+
+			return true
+		}
+
+		logrus.WithError(err).Error("Cannot check if fixtures can be loaded")
+		time.Sleep(10 * time.Second)
+	}
 }

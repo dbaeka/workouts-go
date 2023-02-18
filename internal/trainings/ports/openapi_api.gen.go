@@ -31,6 +31,9 @@ type ServerInterface interface {
 	// (PUT /trainings/{trainingUUID}/reject-reschedule)
 	RejectRescheduleTraining(w http.ResponseWriter, r *http.Request, trainingUUID openapi_types.UUID)
 
+	// (PUT /trainings/{trainingUUID}/request-reschedule)
+	RequestRescheduleTraining(w http.ResponseWriter, r *http.Request, trainingUUID openapi_types.UUID)
+
 	// (PUT /trainings/{trainingUUID}/reschedule)
 	RescheduleTraining(w http.ResponseWriter, r *http.Request, trainingUUID openapi_types.UUID)
 }
@@ -153,6 +156,34 @@ func (siw *ServerInterfaceWrapper) RejectRescheduleTraining(w http.ResponseWrite
 
 	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.RejectRescheduleTraining(w, r, trainingUUID)
+	})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// RequestRescheduleTraining operation middleware
+func (siw *ServerInterfaceWrapper) RequestRescheduleTraining(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var err error
+
+	// ------------- Path parameter "trainingUUID" -------------
+	var trainingUUID openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "trainingUUID", runtime.ParamLocationPath, chi.URLParam(r, "trainingUUID"), &trainingUUID)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "trainingUUID", Err: err})
+		return
+	}
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{""})
+
+	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RequestRescheduleTraining(w, r, trainingUUID)
 	})
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -317,6 +348,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/trainings/{trainingUUID}/reject-reschedule", wrapper.RejectRescheduleTraining)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/trainings/{trainingUUID}/request-reschedule", wrapper.RequestRescheduleTraining)
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/trainings/{trainingUUID}/reschedule", wrapper.RescheduleTraining)
