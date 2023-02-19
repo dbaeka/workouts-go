@@ -1,7 +1,7 @@
 DROP TABLE IF EXISTS `hours`;
 CREATE TABLE IF NOT EXISTS `hours`
 (
-    hour         TIMESTAMP                                                 NOT NULL,
+    hour         TIMESTAMP                                                 NOT NULL DEFAULT 0,
     availability ENUM ('available', 'not_available', 'training_scheduled') NOT NULL,
     PRIMARY KEY (hour)
 );
@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS `hours`
 DROP TABLE IF EXISTS `dates`;
 CREATE TABLE IF NOT EXISTS `dates`
 (
-    date           DATE    NOT NULL,
+    date           DATE    NOT NULL DEFAULT 0,
     has_free_hours BOOLEAN NOT NULL DEFAULT FALSE,
     PRIMARY KEY (date)
 );

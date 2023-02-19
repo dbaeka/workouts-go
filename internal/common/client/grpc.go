@@ -42,7 +42,7 @@ func NewTrainerClient() (client trainer.TrainerServiceClient, close func() error
 }
 
 func WaitForTrainerService(timeout time.Duration) bool {
-	return waitForPort(os.Getenv("TRAINER_GRPC_ADDR"), timeout)
+	return WaitForPort(os.Getenv("TRAINER_GRPC_ADDR"), timeout)
 }
 
 func NewUsersClient() (client users.UsersServiceClient, close func() error, err error) {
@@ -72,7 +72,7 @@ func NewUsersClient() (client users.UsersServiceClient, close func() error, err 
 }
 
 func WaitForUsersService(timeout time.Duration) bool {
-	return waitForPort(os.Getenv("USERS_GRPC_ADDR"), timeout)
+	return WaitForPort(os.Getenv("USERS_GRPC_ADDR"), timeout)
 }
 
 func grpcDialOpts(grpcAddr string) ([]grpc.DialOption, error) {

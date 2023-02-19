@@ -1,3 +1,6 @@
+version: '3.8'
+name: 'workouts-go'
+
 services:
   web:
     build:
@@ -15,6 +18,8 @@ services:
       context: docker/app
     volumes:
       - ./internal:/internal
+      - ./.go/pkg:/go/pkg
+      - ./.go-cache:/go-cache
     #      - ./service-account-file.json:$SERVICE_ACCOUNT_FILE
     working_dir: /internal/trainer
     ports:
@@ -23,14 +28,17 @@ services:
       - .env
     environment:
       SERVER_TO_RUN: http
+      GOCACHE: /go-cache
     depends_on:
-      - firestore
+      - mysql
 
   trainer-grpc:
     build:
       context: docker/app
     volumes:
       - ./internal:/internal
+      - ./.go/pkg:/go/pkg
+      - ./.go-cache:/go-cache
     #      - ./service-account-file.json:$SERVICE_ACCOUNT_FILE
     working_dir: /internal/trainer
     ports:
@@ -39,64 +47,77 @@ services:
       - .env
     environment:
       SERVER_TO_RUN: grpc
+      GOCACHE: /go-cache
     depends_on:
-      - firestore
+      - mysql
 
   trainings-http:
     build:
       context: docker/app
     volumes:
       - ./internal:/internal
+      - ./.go/pkg:/go/pkg
+      - ./.go-cache:/go-cache
     #      - ./service-account-file.json:$SERVICE_ACCOUNT_FILE
     working_dir: /internal/trainings
     ports:
       - "127.0.0.1:3001:$PORT"
     env_file:
       - .env
+    environment:
+      GOCACHE: /go-cache
     depends_on:
-      - firestore
+      - mysql
 
   users-http:
     build:
       context: docker/app
     volumes:
       - ./internal:/internal
+      - ./.go/pkg:/go/pkg
+      - ./.go-cache:/go-cache
     #      - ./service-account-file.json:$SERVICE_ACCOUNT_FILE
     working_dir: /internal/users
     ports:
       - "127.0.0.1:3002:$PORT"
     environment:
       SERVER_TO_RUN: http
+      GOCACHE: /go-cache
     env_file:
       - .env
     depends_on:
-      - firestore
+      - mysql
 
   users-grpc:
     build:
       context: docker/app
     volumes:
       - ./internal:/internal
+      - ./.go/pkg:/go/pkg
+      - ./.go-cache:/go-cache
     #      - ./service-account-file.json:$SERVICE_ACCOUNT_FILE
     working_dir: /internal/users
     ports:
       - "127.0.0.1:3020:$PORT"
     environment:
       SERVER_TO_RUN: grpc
+      GOCACHE: /go-cache
     env_file:
       - .env
     depends_on:
-      - firestore
-
-  firestore:
-    image: karhoo/firestore-emulator:0.4.13
-    env_file:
-      - .env
-    ports:
-      - "127.0.0.1:8787:8787"
-    restart: unless-stopped
+      - mysql
 
   mysql:
+    image: mysql:8
+    env_file:
+      - .env
+    volumes:
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    ports:
+      - "127.0.0.1:3306:3306"
+    restart: unless-stopped
+
+  mysql-components-test:
     image: mysql:8
     env_file:
       - .env

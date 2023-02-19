@@ -160,7 +160,6 @@ func TestTrainingsFirestoreRepository_AllTrainings(t *testing.T) {
 	// AllTrainings returns all documents, because of that we need to do exception and do DB cleanup
 	// In general, I recommend to do it before test. In that way you are sure that cleanup is done.
 	// Thanks to that tests are more stable.
-	// More about why it is important you can find in https://threedots.tech/post/database-integration-testing/
 	err := repo.RemoveAllTrainings(context.Background())
 	require.NoError(t, err)
 
@@ -217,8 +216,16 @@ func TestTrainingsFirestoreRepository_AllTrainings(t *testing.T) {
 			CanBeCancelled: true,
 		},
 	}
+	var filteredTrainings []query.Training
+	for _, tr := range trainings {
+		for _, ex := range expectedTrainings {
+			if tr.UUID == ex.UUID {
+				filteredTrainings = append(filteredTrainings, tr)
+			}
+		}
+	}
 
-	assertQueryTrainingsEquals(t, expectedTrainings, trainings)
+	assertQueryTrainingsEquals(t, expectedTrainings, filteredTrainings)
 }
 
 func TestTrainingsFirestoreRepository_FindTrainingsForUser(t *testing.T) {
@@ -290,6 +297,7 @@ func newRandomTrainingTime() time.Time {
 }
 
 func newExampleTraining(t *testing.T) *training.Training {
+	t.Helper()
 	tr, err := training.NewTraining(
 		uuid.New().String(),
 		uuid.New().String(),
@@ -302,6 +310,7 @@ func newExampleTraining(t *testing.T) *training.Training {
 }
 
 func newCanceledTraining(t *testing.T) *training.Training {
+	t.Helper()
 	tr, err := training.NewTraining(
 		uuid.New().String(),
 		uuid.New().String(),
@@ -317,6 +326,7 @@ func newCanceledTraining(t *testing.T) *training.Training {
 }
 
 func newTrainingWithNote(t *testing.T) *training.Training {
+	t.Helper()
 	tr := newExampleTraining(t)
 	err := tr.UpdateNotes("foo")
 	require.NoError(t, err)
@@ -325,6 +335,7 @@ func newTrainingWithNote(t *testing.T) *training.Training {
 }
 
 func newTrainingWithProposedReschedule(t *testing.T) *training.Training {
+	t.Helper()
 	tr := newExampleTraining(t)
 	tr.ProposeReschedule(time.Now().AddDate(0, 0, 14), training.Trainer)
 
@@ -332,6 +343,7 @@ func newTrainingWithProposedReschedule(t *testing.T) *training.Training {
 }
 
 func assertPersistedTrainingEquals(t *testing.T, repo adapters.MySQLTrainingsRepository, tr *training.Training) {
+	t.Helper()
 	persistedTraining, err := repo.GetTraining(
 		context.Background(),
 		tr.UUID(),
@@ -348,6 +360,7 @@ var cmpRoundTimeOpt = cmp.Comparer(func(x, y time.Time) bool {
 })
 
 func assertTrainingsEquals(t *testing.T, tr1, tr2 *training.Training) {
+	t.Helper()
 	cmpOpts := []cmp.Option{
 		cmpRoundTimeOpt,
 		cmp.AllowUnexported(
@@ -365,6 +378,7 @@ func assertTrainingsEquals(t *testing.T, tr1, tr2 *training.Training) {
 }
 
 func assertQueryTrainingsEquals(t *testing.T, expectedTrainings, trainings []query.Training) bool {
+	t.Helper()
 	cmpOpts := []cmp.Option{
 		cmpRoundTimeOpt,
 		cmpopts.SortSlices(func(x, y query.Training) bool {

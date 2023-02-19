@@ -15,7 +15,7 @@ import (
 	"google.golang.org/api/option"
 )
 
-func loadFixtures(_ db) {
+func loadFixtures() {
 	start := time.Now()
 	logrus.Debug("Waiting for users service")
 

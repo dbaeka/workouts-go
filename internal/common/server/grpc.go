@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"github.com/dbaeka/workouts-go/internal/common/logs"
 	"net"
 	"os"
 
@@ -13,7 +14,11 @@ import (
 )
 
 func init() {
-	grpclogrus.ReplaceGrpcLogger(logrus.NewEntry(logrus.StandardLogger()))
+	logger := logrus.New()
+	logs.SetFormatter(logger)
+	logger.SetLevel(logrus.WarnLevel)
+
+	grpclogrus.ReplaceGrpcLogger(logrus.NewEntry(logger))
 }
 
 func RunGRPCServer(registerServer func(server *grpc.Server)) {
@@ -21,8 +26,11 @@ func RunGRPCServer(registerServer func(server *grpc.Server)) {
 	if port == "" {
 		port = "8080"
 	}
-	grpcEndpoint := fmt.Sprintf(":%s", port)
+	addr := fmt.Sprintf(":%s", port)
+	RunGRPCServerOnAddr(addr, registerServer)
+}
 
+func RunGRPCServerOnAddr(addr string, registerServer func(server *grpc.Server)) {
 	logrusEntry := logrus.NewEntry(logrus.StandardLogger())
 	grpclogrus.ReplaceGrpcLogger(logrusEntry)
 
@@ -37,10 +45,10 @@ func RunGRPCServer(registerServer func(server *grpc.Server)) {
 		),
 	)
 	registerServer(grpcServer)
-	listen, err := net.Listen("tcp", grpcEndpoint)
+	listen, err := net.Listen("tcp", addr)
 	if err != nil {
 		logrus.Fatal(err)
 	}
-	logrus.WithField("grpc_endpoint", grpcEndpoint).Info("Starting: gRPC Listener")
+	logrus.WithField("grpc_endpoint", addr).Info("Starting: gRPC Listener")
 	logrus.Fatal(grpcServer.Serve(listen))
 }
