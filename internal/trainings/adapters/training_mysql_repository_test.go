@@ -2,6 +2,10 @@ package adapters_test
 
 import (
 	"context"
+	"math/rand"
+	"testing"
+	"time"
+
 	"github.com/dbaeka/workouts-go/internal/trainings/adapters"
 	"github.com/dbaeka/workouts-go/internal/trainings/app/query"
 	"github.com/dbaeka/workouts-go/internal/trainings/domain/training"
@@ -10,9 +14,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"math/rand"
-	"testing"
-	"time"
 )
 
 func newMySQLRepository(t *testing.T) adapters.MySQLTrainingsRepository {

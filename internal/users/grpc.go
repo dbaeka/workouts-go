@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+
 	"github.com/golang/protobuf/ptypes/empty"
 
 	"github.com/dbaeka/workouts-go/internal/common/genproto/users"
@@ -14,7 +15,6 @@ import (
 // the RPC functions
 type GrpcServer struct {
 	db db
-	users.UnimplementedUsersServiceServer
 }
 
 func (g GrpcServer) GetTrainingBalance(

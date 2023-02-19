@@ -74,17 +74,16 @@ func (c *trainerServiceClient) MakeHourAvailable(ctx context.Context, in *Update
 }
 
 // TrainerServiceServer is the server API for TrainerService service.
-// All implementations must embed UnimplementedTrainerServiceServer
+// All implementations should embed UnimplementedTrainerServiceServer
 // for forward compatibility
 type TrainerServiceServer interface {
 	IsHourAvailable(context.Context, *IsHourAvailableRequest) (*IsHourAvailableResponse, error)
 	ScheduleTraining(context.Context, *UpdateHourRequest) (*empty.Empty, error)
 	CancelTraining(context.Context, *UpdateHourRequest) (*empty.Empty, error)
 	MakeHourAvailable(context.Context, *UpdateHourRequest) (*empty.Empty, error)
-	mustEmbedUnimplementedTrainerServiceServer()
 }
 
-// UnimplementedTrainerServiceServer must be embedded to have forward compatible implementations.
+// UnimplementedTrainerServiceServer should be embedded to have forward compatible implementations.
 type UnimplementedTrainerServiceServer struct {
 }
 
@@ -100,7 +99,6 @@ func (UnimplementedTrainerServiceServer) CancelTraining(context.Context, *Update
 func (UnimplementedTrainerServiceServer) MakeHourAvailable(context.Context, *UpdateHourRequest) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method MakeHourAvailable not implemented")
 }
-func (UnimplementedTrainerServiceServer) mustEmbedUnimplementedTrainerServiceServer() {}
 
 // UnsafeTrainerServiceServer may be embedded to opt out of forward compatibility for this service.
 // Use of this interface is not recommended, as added methods to TrainerServiceServer will

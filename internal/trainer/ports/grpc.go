@@ -3,9 +3,10 @@ package ports
 import (
 	"context"
 	"errors"
+	"time"
+
 	"github.com/dbaeka/workouts-go/internal/trainer/app"
 	"google.golang.org/grpc/codes"
-	"time"
 
 	"github.com/dbaeka/workouts-go/internal/common/genproto/trainer"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -15,7 +16,6 @@ import (
 
 type GrpcServer struct {
 	app app.Application
-	trainer.UnimplementedTrainerServiceServer
 }
 
 func NewGrpcServer(app app.Application) GrpcServer {

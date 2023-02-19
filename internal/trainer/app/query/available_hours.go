@@ -2,9 +2,10 @@ package query
 
 import (
 	"context"
+	"time"
+
 	"github.com/dbaeka/workouts-go/internal/common/errors"
 	"github.com/sirupsen/logrus"
-	"time"
 )
 
 type AvailableHoursReadModel interface {

@@ -1,8 +1,9 @@
 package ports
 
 import (
-	"github.com/dbaeka/workouts-go/internal/trainer/app/query"
 	"net/http"
+
+	"github.com/dbaeka/workouts-go/internal/trainer/app/query"
 
 	"github.com/dbaeka/workouts-go/internal/trainer/app"
 	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"

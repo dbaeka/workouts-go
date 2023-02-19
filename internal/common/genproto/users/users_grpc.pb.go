@@ -54,15 +54,14 @@ func (c *usersServiceClient) UpdateTrainingBalance(ctx context.Context, in *Upda
 }
 
 // UsersServiceServer is the server API for UsersService service.
-// All implementations must embed UnimplementedUsersServiceServer
+// All implementations should embed UnimplementedUsersServiceServer
 // for forward compatibility
 type UsersServiceServer interface {
 	GetTrainingBalance(context.Context, *GetTrainingBalanceRequest) (*GetTrainingBalanceResponse, error)
 	UpdateTrainingBalance(context.Context, *UpdateTrainingBalanceRequest) (*empty.Empty, error)
-	mustEmbedUnimplementedUsersServiceServer()
 }
 
-// UnimplementedUsersServiceServer must be embedded to have forward compatible implementations.
+// UnimplementedUsersServiceServer should be embedded to have forward compatible implementations.
 type UnimplementedUsersServiceServer struct {
 }
 
@@ -72,7 +71,6 @@ func (UnimplementedUsersServiceServer) GetTrainingBalance(context.Context, *GetT
 func (UnimplementedUsersServiceServer) UpdateTrainingBalance(context.Context, *UpdateTrainingBalanceRequest) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateTrainingBalance not implemented")
 }
-func (UnimplementedUsersServiceServer) mustEmbedUnimplementedUsersServiceServer() {}
 
 // UnsafeUsersServiceServer may be embedded to opt out of forward compatibility for this service.
 // Use of this interface is not recommended, as added methods to UsersServiceServer will

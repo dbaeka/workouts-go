@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
-	"github.com/dbaeka/workouts-go/internal/trainer/app"
-	"github.com/dbaeka/workouts-go/internal/trainer/app/query"
 	"math/rand"
 	"time"
+
+	"github.com/dbaeka/workouts-go/internal/trainer/app"
+	"github.com/dbaeka/workouts-go/internal/trainer/app/query"
 
 	"github.com/dbaeka/workouts-go/internal/common/client"
 	"github.com/pkg/errors"

@@ -32,17 +32,12 @@ openapi_js:
 mysql:
 	mysql -u ${MYSQL_USERNAME} -p${MYSQL_PASSWORD} ${MYSQL_DATABASE}
 
-
-INTERNAL_PACKAGES := $(wildcard internal/*)
-
-ifeq (test,$(firstword $(MAKECMDGOALS)))
-  TEST_ARGS := $(subst $$,$$$$,$(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS)))
-  $(eval $(TEST_ARGS):;@:)
-endif
 .PHONY: test $(INTERNAL_PACKAGES)
-test: $(INTERNAL_PACKAGES)
-$(INTERNAL_PACKAGES):
-	@(cd $@ && go test -count=1 -race ./... $(subst $$$$,$$,$(TEST_ARGS)))
+test:
+	@./scripts/test.sh common .e2e.env
+	@./scripts/test.sh trainer .test.env
+	@./scripts/test.sh trainings .test.env
+	@./scripts/test.sh users .test.env
 
 .PHONY: fmt
 fmt:

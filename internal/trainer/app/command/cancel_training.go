@@ -2,9 +2,10 @@ package command
 
 import (
 	"context"
+	"time"
+
 	"github.com/dbaeka/workouts-go/internal/common/errors"
 	"github.com/dbaeka/workouts-go/internal/trainer/domain/hour"
-	"time"
 )
 
 type CancelTrainingHandler struct {

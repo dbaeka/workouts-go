@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/dbaeka/workouts-go/internal/trainer/app/command"
-	"github.com/dbaeka/workouts-go/internal/trainer/app/query"
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/dbaeka/workouts-go/internal/trainer/app/command"
+	"github.com/dbaeka/workouts-go/internal/trainer/app/query"
 
 	"github.com/dbaeka/workouts-go/internal/common/genproto/trainer"
 	_ "github.com/dbaeka/workouts-go/internal/common/logs"

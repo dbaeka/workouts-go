@@ -2,8 +2,9 @@ package query
 
 import (
 	"context"
-	"github.com/dbaeka/workouts-go/internal/trainer/domain/hour"
 	"time"
+
+	"github.com/dbaeka/workouts-go/internal/trainer/domain/hour"
 )
 
 type HourAvailabilityHandler struct {
