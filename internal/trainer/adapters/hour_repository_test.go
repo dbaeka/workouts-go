@@ -213,6 +213,7 @@ func testUpdateHour_rollback(t *testing.T, repository hour.Repository) {
 		require.NoError(t, h.MakeAvailable())
 		return h, nil
 	})
+	require.NoError(t, err)
 
 	err = repository.UpdateHour(ctx, hourTime, func(h *hour.Hour) (*hour.Hour, error) {
 		assert.True(t, h.IsAvailable())

@@ -49,11 +49,11 @@ func TestTrainingsFirestoreRepository_AddTraining(t *testing.T) {
 	}
 
 	for _, c := range testCases {
+		c := c
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
 			ctx := context.Background()
-
 			expectedTraining := c.TrainingConstructor(t)
 
 			err := repo.AddTraining(ctx, expectedTraining)
@@ -234,6 +234,7 @@ func TestTrainingsFirestoreRepository_FindTrainingsForUser(t *testing.T) {
 		"User",
 		time.Now(),
 	)
+	require.NoError(t, err)
 	err = repo.AddTraining(ctx, tr1)
 	require.NoError(t, err)
 
@@ -243,6 +244,7 @@ func TestTrainingsFirestoreRepository_FindTrainingsForUser(t *testing.T) {
 		"User",
 		time.Now(),
 	)
+	require.NoError(t, err)
 	err = repo.AddTraining(ctx, tr2)
 	require.NoError(t, err)
 
@@ -253,6 +255,7 @@ func TestTrainingsFirestoreRepository_FindTrainingsForUser(t *testing.T) {
 		"User",
 		time.Now(),
 	)
+	require.NoError(t, err)
 	err = canceledTraining.Cancel()
 	require.NoError(t, err)
 	err = repo.AddTraining(ctx, canceledTraining)

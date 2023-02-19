@@ -1,16 +1,13 @@
 linters:
   disable-all: true
   enable:
-    - deadcode
     - errcheck
     - gosimple
     - govet
     - ineffassign
     - staticcheck
-    - structcheck
     - typecheck
     - unused
-    - varcheck
     - asciicheck
     - bodyclose
     - dogsled
@@ -26,7 +23,6 @@ linters:
     - nakedret
     - nestif
     - noctx
-    - rowserrcheck
     - sqlclosecheck
     - unconvert
     - unparam

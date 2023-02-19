@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	firebase "firebase.google.com/go"
 	"github.com/dbaeka/workouts-go/internal/common/auth"
@@ -18,15 +19,25 @@ import (
 )
 
 func RunHTTPServer(createHandler func(router chi.Router) http.Handler) {
+	RunHTTPServerOnAddr(":"+os.Getenv("PORT"), createHandler)
+}
+
+func RunHTTPServerOnAddr(addr string, createHandler func(router chi.Router) http.Handler) {
 	apiRouter := chi.NewRouter()
 	setMiddlewares(apiRouter)
 
 	rootRouter := chi.NewRouter()
+	// we are mounting all APIs under /api path
 	rootRouter.Mount("/api", createHandler(apiRouter))
 
-	logrus.Info("Staring HTTP Server")
+	logrus.Info("Starting HTTP server")
 
-	_ = http.ListenAndServe(":"+os.Getenv("PORT"), rootRouter)
+	server := &http.Server{
+		Addr:              addr,
+		Handler:           rootRouter,
+		ReadHeaderTimeout: 10 * time.Second,
+	}
+	_ = server.ListenAndServe()
 }
 
 func setMiddlewares(router *chi.Mux) {

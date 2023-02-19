@@ -38,5 +38,4 @@ func main() {
 	default:
 		panic(fmt.Sprintf("server type '%s' is not supported", serverType))
 	}
-
 }

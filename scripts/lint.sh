@@ -2,7 +2,7 @@
 set -e
 
 if [ "$2" == "-install" ]; then
-  curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "$(go env GOPATH)/bin v1.43.0"
+  curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "$(go env GOPATH)/bin v1.51.1"
   go install github.com/roblaszczak/go-cleanarch@latest
 fi
 

@@ -92,6 +92,7 @@ func (r MySQLTrainingsRepository) trainingModelsToQuery(dbTrainings *[]mysqlTrai
 	var trainings []query.Training
 
 	for _, dbTraining := range *dbTrainings {
+		dbTraining := dbTraining
 		tr, err := r.unmarshalTraining(&dbTraining)
 		if err != nil {
 			return nil, err
