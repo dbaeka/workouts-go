@@ -41,10 +41,10 @@ type sqlContextGetter interface {
 }
 
 func (m MySQLHourRepository) GetHour(ctx context.Context, time time.Time) (*hour.Hour, error) {
-	return m.getOrCreateHour(ctx, m.db, time, false)
+	return m.getHour(ctx, m.db, time, false)
 }
 
-func (m MySQLHourRepository) getOrCreateHour(
+func (m MySQLHourRepository) getHour(
 	ctx context.Context,
 	db sqlContextGetter,
 	hourTime time.Time,
@@ -117,7 +117,7 @@ func (m MySQLHourRepository) updateHour(
 		err = m.finishTransaction(err, tx)
 	}()
 
-	existingHour, err := m.getOrCreateHour(ctx, tx, hourTime, true)
+	existingHour, err := m.getHour(ctx, tx, hourTime, true)
 	if err != nil {
 		return err
 	}

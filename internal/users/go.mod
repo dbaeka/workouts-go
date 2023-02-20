@@ -3,14 +3,16 @@ module github.com/dbaeka/workouts-go/internal/users
 go 1.19
 
 require (
-	cloud.google.com/go/firestore v1.9.0
 	firebase.google.com/go v3.13.0+incompatible
 	github.com/dbaeka/workouts-go/internal/common v0.0.0-00010101000000-000000000000
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/go-chi/render v1.0.2
+	github.com/go-sql-driver/mysql v1.7.0
 	github.com/golang/protobuf v1.5.2
+	github.com/jmoiron/sqlx v1.3.5
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.0
+	go.uber.org/multierr v1.1.0
 	google.golang.org/api v0.109.0
 	google.golang.org/grpc v1.52.3
 )
@@ -19,6 +21,7 @@ require (
 	cloud.google.com/go v0.107.0 // indirect
 	cloud.google.com/go/compute v1.18.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
+	cloud.google.com/go/firestore v1.9.0 // indirect
 	cloud.google.com/go/iam v0.8.0 // indirect
 	cloud.google.com/go/longrunning v0.3.0 // indirect
 	cloud.google.com/go/storage v1.27.0 // indirect
@@ -38,6 +41,7 @@ require (
 	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2 // indirect
 	go.opencensus.io v0.24.0 // indirect
+	go.uber.org/atomic v1.4.0 // indirect
 	golang.org/x/crypto v0.1.0 // indirect
 	golang.org/x/net v0.5.0 // indirect
 	golang.org/x/oauth2 v0.4.0 // indirect

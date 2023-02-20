@@ -23,7 +23,10 @@ func (h HttpServer) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err == nil {
-		err = h.db.UpdateLastIP(r.Context(), authUser.UUID, host)
+		err := h.db.UpdateUser(r.Context(), authUser.UUID, func(u *mysqlUser) (*mysqlUser, error) {
+			u.LastIP = host
+			return u, nil
+		})
 		if err != nil {
 			httperr.InternalError("internal-server-error", err, w, r)
 			return

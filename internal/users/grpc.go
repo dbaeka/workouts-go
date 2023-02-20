@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/pkg/errors"
 
 	"github.com/golang/protobuf/ptypes/empty"
 
@@ -33,7 +34,14 @@ func (g GrpcServer) UpdateTrainingBalance(
 	ctx context.Context,
 	r *users.UpdateTrainingBalanceRequest,
 ) (*empty.Empty, error) {
-	err := g.db.UpdateBalance(ctx, r.UserId, int(r.AmountChange))
+	err := g.db.UpdateUser(ctx, r.UserId, func(u *mysqlUser) (*mysqlUser, error) {
+		amountChange := int(r.AmountChange)
+		u.Balance += amountChange
+		if u.Balance < 0 {
+			return nil, errors.New("balance cannot be smaller than 0")
+		}
+		return u, nil
+	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to update balance: %s", err))
 	}
