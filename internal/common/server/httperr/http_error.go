@@ -3,6 +3,8 @@ package httperr
 import (
 	"net/http"
 
+	"github.com/dbaeka/workouts-go/internal/common/errors"
+
 	"github.com/dbaeka/workouts-go/internal/common/logs"
 	"github.com/go-chi/render"
 )
@@ -25,6 +27,23 @@ func httpRespondWithError(err error, slug string, w http.ResponseWriter, r *http
 
 	if err := render.Render(w, r, resp); err != nil {
 		panic(err)
+	}
+}
+
+func RespondWithSlugError(err error, w http.ResponseWriter, r *http.Request) {
+	slugError, ok := err.(errors.SlugError)
+	if !ok {
+		InternalError("internal-server-error", err, w, r)
+		return
+	}
+
+	switch slugError.ErrorType() {
+	case errors.ErrorTypeAuthorization:
+		Unauthorized(slugError.Slug(), slugError, w, r)
+	case errors.ErrorTypeIncorrectInput:
+		BadRequest(slugError.Slug(), slugError, w, r)
+	default:
+		InternalError(slugError.Slug(), slugError, w, r)
 	}
 }
 

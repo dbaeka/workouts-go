@@ -4,11 +4,14 @@ package trainer;
 
 option go_package = "github.com/dbaeka/workouts-go/api/protobuf/trainer";
 
+import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 
 service TrainerService {
   rpc IsHourAvailable(IsHourAvailableRequest) returns (IsHourAvailableResponse) {}
-  rpc UpdateHour(UpdateHourRequest) returns (EmptyResponse) {}
+  rpc ScheduleTraining(UpdateHourRequest) returns (google.protobuf.Empty) {}
+  rpc CancelTraining(UpdateHourRequest) returns (google.protobuf.Empty) {}
+  rpc MakeHourAvailable(UpdateHourRequest) returns (google.protobuf.Empty) {}
 }
 
 message IsHourAvailableRequest {
@@ -21,9 +24,4 @@ message IsHourAvailableResponse {
 
 message UpdateHourRequest {
   google.protobuf.Timestamp time = 1;
-
-  bool has_training_scheduled = 2;
-  bool available = 3;
 }
-
-message EmptyResponse {}

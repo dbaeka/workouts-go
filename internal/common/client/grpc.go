@@ -20,7 +20,6 @@ func NewTrainerClient() (client trainer.TrainerServiceClient, close func() error
 
 	client = nil
 	close = func() error { return nil }
-	err = nil
 
 	if grpcAddr == "" {
 		err = errors.New("empty env TRAINER_GRPC_ADDR")
@@ -43,7 +42,7 @@ func NewTrainerClient() (client trainer.TrainerServiceClient, close func() error
 }
 
 func WaitForTrainerService(timeout time.Duration) bool {
-	return waitForPort(os.Getenv("TRAINER_GRPC_ADDR"), timeout)
+	return WaitForPort(os.Getenv("TRAINER_GRPC_ADDR"), timeout)
 }
 
 func NewUsersClient() (client users.UsersServiceClient, close func() error, err error) {
@@ -51,7 +50,6 @@ func NewUsersClient() (client users.UsersServiceClient, close func() error, err 
 
 	client = nil
 	close = func() error { return nil }
-	err = nil
 
 	if grpcAddr == "" {
 		err = errors.New("empty env USERS_GRPC_ADDR")
@@ -74,7 +72,7 @@ func NewUsersClient() (client users.UsersServiceClient, close func() error, err 
 }
 
 func WaitForUsersService(timeout time.Duration) bool {
-	return waitForPort(os.Getenv("USERS_GRPC_ADDR"), timeout)
+	return WaitForPort(os.Getenv("USERS_GRPC_ADDR"), timeout)
 }
 
 func grpcDialOpts(grpcAddr string) ([]grpc.DialOption, error) {
@@ -87,7 +85,8 @@ func grpcDialOpts(grpcAddr string) ([]grpc.DialOption, error) {
 		return nil, errors.Wrap(err, "cannot load root CA cert")
 	}
 	creds := credentials.NewTLS(&tls.Config{
-		RootCAs: systemRoots,
+		RootCAs:    systemRoots,
+		MinVersion: tls.VersionTLS12,
 	})
 
 	return []grpc.DialOption{

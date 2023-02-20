@@ -15,7 +15,7 @@ import (
 	"google.golang.org/api/option"
 )
 
-func loadFixtures(_ db) {
+func loadFixtures() {
 	start := time.Now()
 	logrus.Debug("Waiting for users service")
 
@@ -25,7 +25,7 @@ func loadFixtures(_ db) {
 		return
 	}
 
-	logrus.WithField("after", time.Now().Sub(start)).Debug("Users service is available")
+	logrus.WithField("after", time.Since(start)).Debug("Users service is available")
 
 	var attendeeUUIDs []string
 	var err error
@@ -55,7 +55,7 @@ func loadFixtures(_ db) {
 		time.Sleep(10 * time.Second)
 	}
 
-	logrus.WithField("after", time.Now().Sub(start)).Debug("Users fixtures loaded")
+	logrus.WithField("after", time.Since(start)).Debug("Users fixtures loaded")
 }
 
 func createFirebaseUsers() ([]string, error) {

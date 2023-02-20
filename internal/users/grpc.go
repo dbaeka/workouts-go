@@ -3,6 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/pkg/errors"
+
+	"github.com/golang/protobuf/ptypes/empty"
+
 	"github.com/dbaeka/workouts-go/internal/common/genproto/users"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -12,7 +16,6 @@ import (
 // the RPC functions
 type GrpcServer struct {
 	db db
-	users.UnimplementedUsersServiceServer
 }
 
 func (g GrpcServer) GetTrainingBalance(
@@ -30,11 +33,18 @@ func (g GrpcServer) GetTrainingBalance(
 func (g GrpcServer) UpdateTrainingBalance(
 	ctx context.Context,
 	r *users.UpdateTrainingBalanceRequest,
-) (*users.EmptyResponse, error) {
-	err := g.db.UpdateBalance(ctx, r.UserId, int(r.AmountChange))
+) (*empty.Empty, error) {
+	err := g.db.UpdateUser(ctx, r.UserId, func(u *mysqlUser) (*mysqlUser, error) {
+		amountChange := int(r.AmountChange)
+		u.Balance += amountChange
+		if u.Balance < 0 {
+			return nil, errors.New("balance cannot be smaller than 0")
+		}
+		return u, nil
+	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to update balance: %s", err))
 	}
 
-	return &users.EmptyResponse{}, nil
+	return &empty.Empty{}, nil
 }

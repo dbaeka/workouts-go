@@ -17,13 +17,16 @@ type HttpServer struct {
 func (h HttpServer) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	authUser, err := auth.UserFromCtx(r.Context())
 	if err != nil {
-		httperr.Unauthorized("no-user-found", err, w, r)
+		httperr.RespondWithSlugError(err, w, r)
 		return
 	}
 
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err == nil {
-		err = h.db.UpdateLastIP(r.Context(), authUser.UUID, host)
+		err := h.db.UpdateUser(r.Context(), authUser.UUID, func(u *mysqlUser) (*mysqlUser, error) {
+			u.LastIP = host
+			return u, nil
+		})
 		if err != nil {
 			httperr.InternalError("internal-server-error", err, w, r)
 			return

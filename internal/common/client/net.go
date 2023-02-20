@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func waitForPort(addr string, timeout time.Duration) bool {
+func WaitForPort(addr string, timeout time.Duration) bool {
 	portAvailable := make(chan struct{})
 	timeoutCh := time.After(timeout)
 

@@ -8,6 +8,8 @@ package users
 
 import (
 	context "context"
+
+	empty "github.com/golang/protobuf/ptypes/empty"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -23,7 +25,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UsersServiceClient interface {
 	GetTrainingBalance(ctx context.Context, in *GetTrainingBalanceRequest, opts ...grpc.CallOption) (*GetTrainingBalanceResponse, error)
-	UpdateTrainingBalance(ctx context.Context, in *UpdateTrainingBalanceRequest, opts ...grpc.CallOption) (*EmptyResponse, error)
+	UpdateTrainingBalance(ctx context.Context, in *UpdateTrainingBalanceRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 }
 
 type usersServiceClient struct {
@@ -43,8 +45,8 @@ func (c *usersServiceClient) GetTrainingBalance(ctx context.Context, in *GetTrai
 	return out, nil
 }
 
-func (c *usersServiceClient) UpdateTrainingBalance(ctx context.Context, in *UpdateTrainingBalanceRequest, opts ...grpc.CallOption) (*EmptyResponse, error) {
-	out := new(EmptyResponse)
+func (c *usersServiceClient) UpdateTrainingBalance(ctx context.Context, in *UpdateTrainingBalanceRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
 	err := c.cc.Invoke(ctx, "/users.UsersService/UpdateTrainingBalance", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -53,25 +55,23 @@ func (c *usersServiceClient) UpdateTrainingBalance(ctx context.Context, in *Upda
 }
 
 // UsersServiceServer is the server API for UsersService service.
-// All implementations must embed UnimplementedUsersServiceServer
+// All implementations should embed UnimplementedUsersServiceServer
 // for forward compatibility
 type UsersServiceServer interface {
 	GetTrainingBalance(context.Context, *GetTrainingBalanceRequest) (*GetTrainingBalanceResponse, error)
-	UpdateTrainingBalance(context.Context, *UpdateTrainingBalanceRequest) (*EmptyResponse, error)
-	mustEmbedUnimplementedUsersServiceServer()
+	UpdateTrainingBalance(context.Context, *UpdateTrainingBalanceRequest) (*empty.Empty, error)
 }
 
-// UnimplementedUsersServiceServer must be embedded to have forward compatible implementations.
+// UnimplementedUsersServiceServer should be embedded to have forward compatible implementations.
 type UnimplementedUsersServiceServer struct {
 }
 
 func (UnimplementedUsersServiceServer) GetTrainingBalance(context.Context, *GetTrainingBalanceRequest) (*GetTrainingBalanceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTrainingBalance not implemented")
 }
-func (UnimplementedUsersServiceServer) UpdateTrainingBalance(context.Context, *UpdateTrainingBalanceRequest) (*EmptyResponse, error) {
+func (UnimplementedUsersServiceServer) UpdateTrainingBalance(context.Context, *UpdateTrainingBalanceRequest) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateTrainingBalance not implemented")
 }
-func (UnimplementedUsersServiceServer) mustEmbedUnimplementedUsersServiceServer() {}
 
 // UnsafeUsersServiceServer may be embedded to opt out of forward compatibility for this service.
 // Use of this interface is not recommended, as added methods to UsersServiceServer will

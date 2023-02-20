@@ -1,13 +1,11 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"os"
 	"strings"
 
-	"cloud.google.com/go/firestore"
 	"github.com/dbaeka/workouts-go/internal/common/genproto/users"
 	_ "github.com/dbaeka/workouts-go/internal/common/logs"
 	"github.com/dbaeka/workouts-go/internal/common/server"
@@ -16,27 +14,25 @@ import (
 )
 
 func main() {
-	ctx := context.Background()
-	firestoreClient, err := firestore.NewClient(ctx, os.Getenv("GCP_PROJECT"))
+	mysqlDB, err := NewMySQLConnection()
 	if err != nil {
 		panic(err)
 	}
-	firebaseDB := db{firestoreClient}
+	mysqlRepo := db{mysqlDB}
 
 	serverType := strings.ToLower(os.Getenv("SERVER_TO_RUN"))
 	switch serverType {
 	case "http":
-		go loadFixtures(firebaseDB)
+		go loadFixtures()
 		server.RunHTTPServer(func(router chi.Router) http.Handler {
-			return HandlerFromMux(HttpServer{firebaseDB}, router) // Function from OpenAPI generated code
+			return HandlerFromMux(HttpServer{mysqlRepo}, router) // Function from OpenAPI generated code
 		})
 	case "grpc":
 		server.RunGRPCServer(func(server *grpc.Server) {
-			svc := GrpcServer{db: firebaseDB}
+			svc := GrpcServer{db: mysqlRepo}
 			users.RegisterUsersServiceServer(server, svc)
 		})
 	default:
 		panic(fmt.Sprintf("server type '%s' is not supported", serverType))
 	}
-
 }

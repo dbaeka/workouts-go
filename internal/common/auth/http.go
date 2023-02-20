@@ -2,9 +2,10 @@ package auth
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"strings"
+
+	commonerrors "github.com/dbaeka/workouts-go/internal/common/errors"
 
 	"firebase.google.com/go/auth"
 	"github.com/dbaeka/workouts-go/internal/common/server/httperr"
@@ -65,7 +66,7 @@ const (
 )
 
 var (
-	NoUserInContextError = errors.New("no user in context")
+	NoUserInContextError = commonerrors.NewAuthorizationError("no user in context", "no-user-found")
 )
 
 func UserFromCtx(ctx context.Context) (User, error) {
